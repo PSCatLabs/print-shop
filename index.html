@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Beautiful menus, composed from your spreadsheet. Deterministic vector design with PSCat.">
+  <title>Printshop — The small business press</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <a class="wordmark" href="/" aria-label="Printshop home"><span class="mark" aria-hidden="true">p.</span> printshop</a>
+    <span class="header-note">THE SMALL BUSINESS PRESS</span>
+    <span class="local-badge"><i></i> Private by design · runs in your browser</span>
+  </header>
+  <main class="workspace">
+    <aside class="settings">
+      <div class="intro"><span class="eyebrow">YOUR NEXT EDITION</span><h1>Good taste.<br>On paper.</h1><p>Bring the details. We’ll set the type.</p></div>
+      <div class="document-switch" role="group" aria-label="Document type">
+        <button id="menu-mode" aria-pressed="true">Menu</button><button id="card-mode" aria-pressed="false">Business card</button>
+      </div>
+      <section id="menu-import" class="control-section">
+        <h2><span>01</span> Bring your menu</h2>
+        <label class="upload" for="upload"><span class="upload-symbol" aria-hidden="true">↥</span><strong>Upload a CSV</strong><small>or drop it here · up to 512 KB</small><input id="upload" type="file" accept=".csv,text/csv"></label>
+        <div class="import-links"><a href="/public/example-menu.csv" download>Example spreadsheet ↓</a><button id="sample" class="text-button">Load example</button></div>
+        <p id="item-summary" class="muted">Loading example menu…</p>
+        <details><summary>Edit CSV directly</summary><label for="csv-editor" class="sr-only">Menu CSV</label><textarea id="csv-editor" rows="6" spellcheck="false"></textarea><button id="apply-csv" class="secondary">Apply CSV</button></details>
+      </section>
+      <form id="controls" autocomplete="off">
+        <section class="control-section">
+          <h2><span>02</span> Make it yours</h2>
+          <label for="business-name">Business name</label><input id="business-name" value="The Olive Room" maxlength="80" required>
+          <label for="subtitle">Subtitle or tagline</label><input id="subtitle" value="SEASONAL KITCHEN · EST. 1998" maxlength="120">
+          <label for="palette">Ink & paper</label>
+          <select id="palette"><option value="olive">Olive & ivory</option><option value="ink">Midnight & chalk</option><option value="wine">Burgundy & cream</option><option value="teal">Petrol & butter</option></select>
+          <div id="palette-chips" aria-hidden="true"><i></i><i></i><i></i></div>
+          <label for="typography">Body typography</label><select id="typography"><option value="editorial">Editorial serif</option><option value="sans">Clean sans serif</option></select>
+          <div id="menu-layout">
+            <div class="field-pair"><div><label for="page-size">Page size</label><select id="page-size"><option value="letter">US Letter</option><option value="a4">A4</option></select></div><div><label for="columns">Columns</label><select id="columns"><option value="2">Two</option><option value="1">One</option></select></div></div>
+            <label for="density">Spacing</label><select id="density"><option value="airy">Generous</option><option value="balanced" selected>Balanced</option><option value="compact">Compact</option></select>
+          </div>
+          <label class="check"><input type="checkbox" id="ornaments" checked> Include decorative details</label>
+        </section>
+        <section id="card-fields" class="control-section" hidden>
+          <h2><span>03</span> Personal details</h2>
+          <label for="card-name">Name</label><input id="card-name" value="Alex Morgan" maxlength="60">
+          <label for="card-role">Role</label><input id="card-role" value="Owner & host" maxlength="80">
+          <label for="card-email">Email</label><input id="card-email" value="hello@example.com" maxlength="120">
+          <label for="card-phone">Phone</label><input id="card-phone" value="(415) 555-0128" maxlength="60">
+          <label for="card-website">Website</label><input id="card-website" value="example.com" maxlength="120">
+          <label for="card-address">Address</label><input id="card-address" value="42 Orchard Street" maxlength="180">
+          <p class="muted">Two sides · 3.5 × 2 in trim · ⅛ in bleed. QR support is awaiting PSCat’s PostScript library.</p>
+        </section>
+      </form>
+      <p class="sidebar-foot">A little less effort.<br>A better first impression.</p>
+    </aside>
+    <section class="studio" aria-label="Design preview">
+      <div class="studio-top"><div><span class="eyebrow">THE COMPOSING ROOM</span><h2 id="document-title">Your menu, beautifully set.</h2></div><span class="edition">EDITION 001</span></div>
+      <div id="template-picker" class="template-picker" role="group" aria-label="Menu template">
+        <button data-template="classic-bistro" aria-pressed="true"><span class="template-serif">Aa</span><span><strong>Classic Bistro</strong><small>Elegant & understated</small></span><i>01</i></button>
+        <button data-template="modernist" aria-pressed="false"><span class="template-sans">Aa</span><span><strong>Modernist</strong><small>Precise & confident</small></span><i>02</i></button>
+        <button data-template="retro-diner" aria-pressed="false"><span class="template-retro">Aa</span><span><strong>Retro Diner</strong><small>Warm & full of character</small></span><i>03</i></button>
+      </div>
+      <div class="preview-toolbar"><span id="page-label">US LETTER / 8.5 × 11 IN</span><div class="page-nav"><button id="previous" aria-label="Previous page" disabled>←</button><span id="page-number">—</span><button id="next" aria-label="Next page" disabled>→</button></div><span class="vector-label">VECTOR PREVIEW</span></div>
+      <div id="preview-stage" class="preview-stage"><div id="placeholder">Setting the type…</div><img id="preview" alt="Actual PSCat-rendered document preview" hidden></div>
+      <div class="preview-caption"><p id="status" role="status" aria-live="polite">Loading the local rendering engine…</p><span>Composed with PSCat</span></div>
+      <div class="export-bar"><div><strong>Ready for its next chapter.</strong><small>Download a vector file, or a 300 dpi image of this page.</small></div><div class="export-actions"><button id="export-svg" class="secondary" disabled>SVG ↓</button><button id="export-png" class="secondary" disabled>PNG ↓</button><button id="export-pdf" class="primary" disabled>Download PDF ↓</button></div></div>
+      <details id="preflight" class="preflight" open><summary>Print notes <span>Review with your printer</span></summary><ul id="preflight-results"><li>Render a document to inspect its print settings.</li></ul><p>PDF exports are RGB vector proofs. This edition does not certify PDF/X production readiness. <a href="/public/licenses/THIRD_PARTY_NOTICES.md">Engine & font notices</a></p></details>
+    </section>
+  </main>
+  <script type="module" src="/src/app.js"></script>
+</body>
+</html>

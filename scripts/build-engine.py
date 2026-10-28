@@ -45,6 +45,7 @@ def main():
     output = ROOT / 'public/engine'
     output.mkdir(parents=True,exist_ok=True)
     shutil.copyfile(source/'target/wasm32-unknown-unknown/release/pscat.wasm',output/'pscat.wasm')
+    (output/'pscat.wasm').chmod(0o644)
     shutil.copyfile(source/'web/pscat.js',output/'pscat.js')
     def sha(path): return hashlib.sha256(path.read_bytes()).hexdigest()
     provenance={
