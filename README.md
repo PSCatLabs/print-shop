@@ -23,9 +23,10 @@ npm run build
 ```
 
 The offline file contains the same app, templates and actual WASM. It requires
-a modern browser with module workers, Blob URLs and native gzip decompression.
-Its module packaging and exact WASM payload are tested under Node. The initial
-environment prevented a real-browser run; browser acceptance remains open.
+a modern browser with workers, Blob URLs and native gzip decompression.
+Chrome 156 passed all nine workflow checks at desktop and 390 px mobile
+viewports. The offline worker is packaged as a single classic script so it
+can start from a file origin. The served edition uses ordinary module workers.
 
 ## Included
 
@@ -65,8 +66,9 @@ Tests generate actual PDFs/SVGs under ignored `artifacts/` for inspection.
 
 ## Status and next work
 
-The rendering API and generated documents are verified. Browser acceptance,
-GitHub publication and production PDF metadata are unfinished. PDFs use RGB
+The rendering API, generated documents and offline browser workflow are
+verified. The served-site check, GitHub publication and production PDF metadata
+remain unfinished. PDFs use RGB
 and outlined type, with no ICC output intent, PDF/X certification, TrimBox,
 BleedBox or crop marks. Menus have no additional bleed. QR awaits the separate
 upstream PS library; XLSX, arbitrary template import, fulfillment and MCP are

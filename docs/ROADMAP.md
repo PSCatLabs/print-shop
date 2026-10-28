@@ -14,21 +14,24 @@ These local IDs are not GitHub issue numbers.
 | --- | --- | --- | --- |
 | 1 | Repository bootstrap and WASM integration | PS-001 | Local app/repository, pinned bridge built; remote blocked |
 | 2 | Structured menu data model | PS-002, PS-012 | CSV implemented; XLSX and broader encoding optional |
-| 3 | First complete menu template | PS-003 | Classic Bistro implemented and output inspected |
+| 3 | First complete menu template | PS-003 | Classic Bistro verified in WASM and desktop/mobile Chrome |
 | 4 | Deterministic layout and pagination | PS-004, PS-010 | Measured flow implemented; balancing/look-ahead follow-up |
-| 5 | Additional visual templates | PS-005 | Modernist and Retro Diner implemented |
-| 6 | SVG/PDF export | PS-006, PS-009 | Actual vector export passes Node tests; browser release gate open |
-| 7 | Business-card support | PS-007, PS-013 | Two-sided card implemented; upstream QR dependency pending |
+| 5 | Additional visual templates | PS-005 | All three verified in desktop/mobile Chrome |
+| 6 | SVG/PDF export | PS-006, PS-009 | Offline browser exports pass; served-site verification remains open |
+| 7 | Business-card support | PS-007, PS-013 | Two-sided card passes browser tests; upstream QR dependency pending |
 | 8 | Print preflight and production readiness | PS-008, PS-011 | Basic preflight; advanced exporter requirements open |
 | 9 | Future fulfillment and MCP integration | PS-014, PS-015 | Boundaries documented; no provider/agent/server implemented |
 
 ## Recommended next session
 
-PS-009 is the next focused task. On a host that can start Chrome and serve
-localhost, run `npm test`, `npm run build`, and `npm run test:browser`. Exercise
-the served edition too, inspect desktop/mobile UI, verify all downloads and
-record concrete browser evidence. Fix observed issues before closing browser
-acceptance or claiming the restaurant-owner workflow is fully verified.
+PS-009's offline acceptance now passes: nine checks in both desktop Chrome and
+a 390 px mobile viewport. JSON reports are in `verification/`. The initial
+module-worker startup failure and async example-load feedback were fixed;
+the packaged classic worker also executes actual WASM in the automated suite.
+The remaining PS-009 task is the served edition and headless CLI runner on a
+host with normal localhost/process permissions. GitHub publication also still
+requires functioning terminal access. Do not close the complete issue solely
+from the offline results.
 
 Then PS-010 improves short-menu composition without inventing a desktop
 publishing engine. PS-011 addresses production metadata with upstream PSCat.

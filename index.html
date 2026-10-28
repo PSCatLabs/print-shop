@@ -14,14 +14,14 @@
   </header>
   <main class="workspace">
     <aside class="settings">
-      <div class="intro"><span class="eyebrow">YOUR NEXT EDITION</span><h1>Good taste.<br>On paper.</h1><p>Bring the details. We’ll set the type.</p></div>
+      <div class="intro"><span class="eyebrow">YOUR NEXT EDITION</span><h1>Good taste.<br> On paper.</h1><p>Bring the details. We’ll set the type.</p></div>
       <div class="document-switch" role="group" aria-label="Document type">
         <button id="menu-mode" aria-pressed="true">Menu</button><button id="card-mode" aria-pressed="false">Business card</button>
       </div>
       <section id="menu-import" class="control-section">
         <h2><span>01</span> Bring your menu</h2>
         <label class="upload" for="upload"><span class="upload-symbol" aria-hidden="true">↥</span><strong>Upload a CSV</strong><small>or drop it here · up to 512 KB</small><input id="upload" type="file" accept=".csv,text/csv"></label>
-        <div class="import-links"><a href="/public/example-menu.csv" download>Example spreadsheet ↓</a><button id="sample" class="text-button">Load example</button></div>
+        <div class="import-links"><a href="/public/example-menu.csv" download="example-menu.csv">Example spreadsheet ↓</a><button id="sample" class="text-button">Load example</button></div>
         <p id="item-summary" class="muted">Loading example menu…</p>
         <details><summary>Edit CSV directly</summary><label for="csv-editor" class="sr-only">Menu CSV</label><textarea id="csv-editor" rows="6" spellcheck="false"></textarea><button id="apply-csv" class="secondary">Apply CSV</button></details>
       </section>

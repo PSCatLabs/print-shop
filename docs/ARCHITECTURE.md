@@ -56,9 +56,15 @@ Future MCP operations call these APIs; no separate rendering implementation.
 7. **Offline and hosted packaging.** `npm run build` copies a static `dist/`
    and creates `dist/printshop-offline.html`. The offline edition packages the
    same modules as Blob modules, embedded PS sources, CSV, notices and gzipped
-   WASM. It adds no rendering engine. It requires modern module workers, Blob
-   URLs, WASM and native gzip `DecompressionStream`. Browser verification was
-   blocked in the initial environment; it is an explicit release gate.
+   WASM. Its worker is one classic script because module-worker startup failed
+   from Chrome's file origin. Packaging removes the two app imports and class
+   export keywords, and converts the upstream wrapper's `import.meta.url`
+   expression to `self.location.href`; the byte-instantiation path is otherwise
+   unchanged. The served edition still uses the original ES module wrapper and
+   module worker. This is packaging of the same renderer, not a second pipeline.
+   It requires workers, Blob URLs, WASM and native gzip `DecompressionStream`.
+   Desktop and mobile offline workflows pass in Chrome 156. The served-site
+   check remains blocked by this environment's localhost restrictions.
 8. **QR stays upstream.** Cards are QR-free. A future QR adapter accepts
    `{payload, sizePt, quietZoneModules, errorCorrection}` and loads a versioned
    PSCat library, invoking its documented PS entry point inside a bounded card

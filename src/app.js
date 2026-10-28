@@ -44,7 +44,7 @@ async function render(){
     status('Setting the type… Previous preview remains until this edition is ready.',false,'running');
     worker=createRenderWorker();
     timeout=setTimeout(()=>{if(id===generation){invalidate();status('Rendering took too long. Try fewer items or a simpler layout. The previous preview is out of date.',true);}},20000);
-    worker.onerror=event=>{if(id===generation){invalidate();status('Rendering failed: '+event.message+'. The previous preview is out of date.',true);}};
+    worker.onerror=event=>{if(id===generation){invalidate();status('Rendering failed: '+(event.message||'the rendering worker could not load')+'. The previous preview is out of date.',true);}};
     worker.onmessage=({data})=>{
       if(data.id!==generation)return;
       clearTimeout(timeout);worker.terminate();
@@ -117,7 +117,10 @@ const drop=document.querySelector('.upload');
 drop.ondragover=event=>{event.preventDefault();drop.classList.add('dragging');};
 drop.ondragleave=()=>drop.classList.remove('dragging');
 drop.ondrop=event=>{event.preventDefault();drop.classList.remove('dragging');loadFile(event.dataTransfer.files[0]);};
-async function sample(){try{applyCSV(await readText('public/example-menu.csv'));}catch(error){status(error.message,true);}}
+async function sample(){
+  invalidate();status('Loading the example menu…',false,'running');
+  try{applyCSV(await readText('public/example-menu.csv'));}catch(error){status(error.message,true);}
+}
 $('sample').onclick=sample;
 document.querySelectorAll('[data-template]').forEach(button=>button.onclick=()=>{
   template=button.dataset.template;

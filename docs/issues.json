@@ -15,7 +15,7 @@
   },
   {
     "id": "PS-003", "phase": 3, "title": "Complete the Classic Bistro PostScript menu template",
-    "status": "Implemented locally; browser acceptance pending PS-009", "dependsOn": ["PS-001", "PS-002"],
+    "status": "Implemented; offline desktop/mobile Chrome acceptance passed", "dependsOn": ["PS-001", "PS-002"],
     "scope": "Build a real reusable PS template with a restrained serif masthead, consistent hierarchy, prices and optional ornaments.",
     "acceptance": ["Load sample CSV, render through WASM, and display its actual SVG.", "Business name, palette and spacing parameters change real document output.", "Content is escaped PS data, separate from template composition.", "Inspect rendered menu type and spacing at normal reading size; export SVG/PDF."],
     "evidence": "templates/classic-bistro.ps; src/postscript.js; artifacts/classic-bistro.pdf (generated)"
@@ -29,21 +29,21 @@
   },
   {
     "id": "PS-005", "phase": 5, "title": "Add Modernist and Retro Diner PostScript compositions",
-    "status": "Implemented locally; browser acceptance pending PS-009", "dependsOn": ["PS-004"],
+    "status": "Implemented; offline desktop/mobile Chrome acceptance passed", "dependsOn": ["PS-004"],
     "scope": "Add two visibly distinct trusted templates sharing the measured layout vocabulary.",
     "acceptance": ["Modernist uses a precise sans masthead, left grid and restrained rule.", "Retro Diner uses an oblique masthead, rounded panel, playful geometric marks and limited flat inks.", "Each works on Letter/A4 with one/two columns, three densities and decorative details on/off.", "Render and visually compare real outputs; prove template hashes differ with identical menu content."],
     "evidence": "templates/modernist.ps; templates/retro-diner.ps; tests/render.test.mjs"
   },
   {
     "id": "PS-006", "phase": 6, "title": "Export complete SVG/PDF documents and selected-page PNG",
-    "status": "Vector API implemented; browser download verification pending PS-009", "dependsOn": ["PS-004"],
+    "status": "Native vector API and offline browser SVG/PDF/PNG exports verified", "dependsOn": ["PS-004"],
     "scope": "Download all-page PDF and selected-page SVG/PNG from actual rendered results, with stale-export prevention.",
     "acceptance": ["The same interpreter run captures SVG and PDF; PDF contains every page.", "SVG has outlined vector type and no screenshot image.", "Validate PDF header, page tree, media dimensions, streams, xref and EOF.", "Verify browser downloads and 300 ppi-equivalent PNG dimensions, and disable export for invalid/running/failed jobs."],
     "evidence": "src/renderer.js; src/app.js; src/browser-tests.js; tests/render.test.mjs"
   },
   {
     "id": "PS-007", "phase": 7, "title": "Render a QR-free two-sided business card with bleed geometry",
-    "status": "Implemented locally; browser acceptance pending PS-009", "dependsOn": ["PS-006"],
+    "status": "Implemented; offline desktop/mobile front/back acceptance passed", "dependsOn": ["PS-006"],
     "scope": "Introduce a second document type using the existing renderer, with a 3.5 × 2 inch trim and 1/8 inch bleed.",
     "acceptance": ["Render front and back as two vector pages on 270 × 162 pt bleed media.", "Support name, role, email, phone, website, address and business identity.", "Check contact overflow against the safe layout and report missing PDF page-box metadata.", "Keep QR encoding absent and document the upstream integration boundary."],
     "evidence": "templates/business-card.ps; compileCard; tests/render.test.mjs"
@@ -57,10 +57,10 @@
   },
   {
     "id": "PS-009", "phase": 6, "title": "Complete desktop/mobile browser and offline edition acceptance",
-    "status": "Open — next task; initial environment blocks Chrome and localhost", "dependsOn": ["PS-003", "PS-005", "PS-006", "PS-007", "PS-008"],
+    "status": "Partially verified — offline desktop/mobile suite passes; served edition and headless CLI remain blocked by host permissions", "dependsOn": ["PS-003", "PS-005", "PS-006", "PS-007", "PS-008"],
     "scope": "Run the included real-browser test runner on a supported host, fix observed failures, and review the responsive interface and file downloads.",
     "acceptance": ["npm run build && npm run test:browser passes in Chrome with no page exceptions.", "Exercise initial sample, business-name/palette changes, all three templates, invalid CSV, file upload, pagination, card front/back and rapid changes.", "Inspect actual UI screenshots at desktop and 390 px mobile width; verify no horizontal clipping.", "Verify SVG/PDF/PNG downloads and offline file opening without HTTP requests; test the ordinary served edition too.", "Record browser/version, report and inspected screenshots; do not close based only on Node tests."],
-    "evidence": "scripts/browser-check.mjs; src/browser-tests.js; docs/VERIFICATION.md"
+    "evidence": "docs/verification/offline-desktop.json; docs/verification/offline-mobile.json; docs/VERIFICATION.md"
   },
   {
     "id": "PS-010", "phase": 4, "title": "Avoid lone category continuations and balance short two-column menus",

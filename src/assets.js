@@ -6,5 +6,5 @@ export async function readText(path) {
 }
 
 export function createRenderWorker() {
-  return new Worker(globalThis.PRINTSHOP_OFFLINE?.workerURL ?? new URL('./render-worker.js',import.meta.url),{type:'module'});
+  return new Worker(globalThis.PRINTSHOP_OFFLINE?.workerURL ?? new URL('./render-worker.js',import.meta.url),{type:globalThis.PRINTSHOP_OFFLINE?.workerType ?? 'module'});
 }

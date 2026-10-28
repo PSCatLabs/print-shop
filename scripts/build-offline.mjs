@@ -9,6 +9,12 @@ for(const name of await readdir('templates'))if(name.endsWith('.ps'))text['templ
 for(const file of ['public/example-menu.csv','public/licenses/THIRD_PARTY_NOTICES.md','public/licenses/wasm-dependency-licenses.html'])text[file]=await readFile(file,'utf8');
 const compressed=gzipSync(await readFile('public/engine/pscat.wasm'),{level:9}).toString('base64');
 const json=value=>JSON.stringify(value).replace(/</g,'\\u003c');
+// Package the file:// worker as one classic script. Module-worker loading
+// rejects opaque file origins in Chrome. The served edition keeps ES modules.
+const workerSource=[modules['public/engine/pscat.js'],
+  modules['src/renderer.js'].replace("import { Pscat } from '../public/engine/pscat.js';",''),
+  modules['src/render-worker.js'].replace("import { VectorRenderer } from './renderer.js';",'')].join('\n')
+  .replace(/^export class /gm,'class ').replaceAll('import.meta.url','self.location.href');
 const bootstrap=`
 const modules=${json(modules)}, text=${json(text)}, cache=new Map();
 const packed=Uint8Array.from(atob(${json(compressed)}),c=>c.charCodeAt(0));
@@ -22,7 +28,8 @@ function moduleURL(file){
     .replace(/\\bimport\\((['"])(\\.[^'"]+\\.js)\\1\\)/g,(_,q,ref)=>'import('+q+resolve(ref)+q+')');
   const url=URL.createObjectURL(new Blob([code],{type:'text/javascript'}));cache.set(file,url);return url;
 }
-globalThis.PRINTSHOP_OFFLINE={text,wasm,workerURL:moduleURL('src/render-worker.js')};
+const workerURL=URL.createObjectURL(new Blob([${json(workerSource)}],{type:'text/javascript'}));
+globalThis.PRINTSHOP_OFFLINE={text,wasm,workerURL,workerType:'classic'};
 for(const a of document.querySelectorAll('a[href]')){
   const file=a.getAttribute('href').replace(/^\\//,'');
   if(file==='') {a.href='#';continue;}
