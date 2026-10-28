@@ -1,0 +1,107 @@
+[
+  {
+    "id": "PS-001", "phase": 1, "title": "Bootstrap standalone app and pin PSCat WASM vector bridge",
+    "status": "Implemented locally; remote publication pending", "dependsOn": [],
+    "scope": "Create the standalone static application, reuse the actual upstream wrapper, and expose the existing SVG/PDF recorders through a minimal versioned adapter.",
+    "acceptance": ["Record exact source commit, branch, patch and artifact hashes.", "Build the WASM target with locked Cargo dependencies.", "Render a PostScript program to actual SVG paths and PDF bytes in Node without a backend.", "Ship engine/font/dependency notices and a reproducible build command."],
+    "evidence": "public/engine/provenance.json; scripts/build-engine.py; tests/render.test.mjs"
+  },
+  {
+    "id": "PS-002", "phase": 2, "title": "Import and validate typed menu CSV data",
+    "status": "Implemented locally", "dependsOn": ["PS-001"],
+    "scope": "Define menu/category/item models and deterministic CSV import with field-specific errors, size bounds and a downloadable example.",
+    "acceptance": ["Parse quoted commas, escaped quotes, newlines, BOM and CRLF.", "Validate required/duplicate/unknown headers, field lengths, prices and empty menus.", "Preserve category and item order, and represent descriptions, dietary labels and variations.", "Reject unsupported text encodings explicitly; test malformed input and the example file."],
+    "evidence": "src/types.d.ts; src/model.js; src/csv.js; public/example-menu.csv; tests/csv.test.mjs"
+  },
+  {
+    "id": "PS-003", "phase": 3, "title": "Complete the Classic Bistro PostScript menu template",
+    "status": "Implemented locally; browser acceptance pending PS-009", "dependsOn": ["PS-001", "PS-002"],
+    "scope": "Build a real reusable PS template with a restrained serif masthead, consistent hierarchy, prices and optional ornaments.",
+    "acceptance": ["Load sample CSV, render through WASM, and display its actual SVG.", "Business name, palette and spacing parameters change real document output.", "Content is escaped PS data, separate from template composition.", "Inspect rendered menu type and spacing at normal reading size; export SVG/PDF."],
+    "evidence": "templates/classic-bistro.ps; src/postscript.js; artifacts/classic-bistro.pdf (generated)"
+  },
+  {
+    "id": "PS-004", "phase": 4, "title": "Measure blocks and flow menus across columns and pages",
+    "status": "Implemented locally", "dependsOn": ["PS-003"],
+    "scope": "Reuse artkit wrapping and functional record callbacks for deterministic variable-content layout.",
+    "acceptance": ["Measure text with actual fonts; reserve price width and align prices to the right.", "Keep items whole and category headings with the first item; repeat category headings after a column/page break.", "Detect over-wide words, over-tall items, title overflow and page limits with named errors.", "Verify small, medium and 500-item fixtures have every item exactly once and all measured bounds inside the page."],
+    "evidence": "templates/common.ps; tests/render.test.mjs; PSITEM/PSDONE interpreter output"
+  },
+  {
+    "id": "PS-005", "phase": 5, "title": "Add Modernist and Retro Diner PostScript compositions",
+    "status": "Implemented locally; browser acceptance pending PS-009", "dependsOn": ["PS-004"],
+    "scope": "Add two visibly distinct trusted templates sharing the measured layout vocabulary.",
+    "acceptance": ["Modernist uses a precise sans masthead, left grid and restrained rule.", "Retro Diner uses an oblique masthead, rounded panel, playful geometric marks and limited flat inks.", "Each works on Letter/A4 with one/two columns, three densities and decorative details on/off.", "Render and visually compare real outputs; prove template hashes differ with identical menu content."],
+    "evidence": "templates/modernist.ps; templates/retro-diner.ps; tests/render.test.mjs"
+  },
+  {
+    "id": "PS-006", "phase": 6, "title": "Export complete SVG/PDF documents and selected-page PNG",
+    "status": "Vector API implemented; browser download verification pending PS-009", "dependsOn": ["PS-004"],
+    "scope": "Download all-page PDF and selected-page SVG/PNG from actual rendered results, with stale-export prevention.",
+    "acceptance": ["The same interpreter run captures SVG and PDF; PDF contains every page.", "SVG has outlined vector type and no screenshot image.", "Validate PDF header, page tree, media dimensions, streams, xref and EOF.", "Verify browser downloads and 300 ppi-equivalent PNG dimensions, and disable export for invalid/running/failed jobs."],
+    "evidence": "src/renderer.js; src/app.js; src/browser-tests.js; tests/render.test.mjs"
+  },
+  {
+    "id": "PS-007", "phase": 7, "title": "Render a QR-free two-sided business card with bleed geometry",
+    "status": "Implemented locally; browser acceptance pending PS-009", "dependsOn": ["PS-006"],
+    "scope": "Introduce a second document type using the existing renderer, with a 3.5 × 2 inch trim and 1/8 inch bleed.",
+    "acceptance": ["Render front and back as two vector pages on 270 × 162 pt bleed media.", "Support name, role, email, phone, website, address and business identity.", "Check contact overflow against the safe layout and report missing PDF page-box metadata.", "Keep QR encoding absent and document the upstream integration boundary."],
+    "evidence": "templates/business-card.ps; compileCard; tests/render.test.mjs"
+  },
+  {
+    "id": "PS-008", "phase": 8, "title": "Add truthful print preflight for current exporter capabilities",
+    "status": "Basic preflight implemented locally", "dependsOn": ["PS-006", "PS-007"],
+    "scope": "Report rendering completeness, counts, bounds, substitutions and production limitations through the shared API and browser interface.",
+    "acceptance": ["Block preflight for missing output, mismatched counts, invalid bounds or substituted fonts.", "Explain outlined typography, RGB PDF 1.4, missing ICC/PDF-X and missing bleed/page boxes.", "Distinguish proof review from certified print readiness.", "Document printer-specific bleed, safe areas, marks and color requirements with primary references."],
+    "evidence": "src/preflight.js; docs/PRINT-PRODUCTION.md; tests/render.test.mjs"
+  },
+  {
+    "id": "PS-009", "phase": 6, "title": "Complete desktop/mobile browser and offline edition acceptance",
+    "status": "Open — next task; initial environment blocks Chrome and localhost", "dependsOn": ["PS-003", "PS-005", "PS-006", "PS-007", "PS-008"],
+    "scope": "Run the included real-browser test runner on a supported host, fix observed failures, and review the responsive interface and file downloads.",
+    "acceptance": ["npm run build && npm run test:browser passes in Chrome with no page exceptions.", "Exercise initial sample, business-name/palette changes, all three templates, invalid CSV, file upload, pagination, card front/back and rapid changes.", "Inspect actual UI screenshots at desktop and 390 px mobile width; verify no horizontal clipping.", "Verify SVG/PDF/PNG downloads and offline file opening without HTTP requests; test the ordinary served edition too.", "Record browser/version, report and inspected screenshots; do not close based only on Node tests."],
+    "evidence": "scripts/browser-check.mjs; src/browser-tests.js; docs/VERIFICATION.md"
+  },
+  {
+    "id": "PS-010", "phase": 4, "title": "Avoid lone category continuations and balance short two-column menus",
+    "status": "Open", "dependsOn": ["PS-004", "PS-009"],
+    "scope": "Improve the professional layout of uneven short menus using measured look-ahead, while preserving deterministic item order.",
+    "acceptance": ["Avoid a single final item in a category continuing alone when moving a pair is possible.", "Compare the current 14-item sample with the improved layout and record the chosen tradeoff.", "Keep every item exactly once, never shrink type to hide overflow, and preserve existing large-menu bounds tests.", "Add focused PS layout fixtures rather than a second JS layout engine."],
+    "evidence": "Current greedy layout is documented in docs/ARCHITECTURE.md"
+  },
+  {
+    "id": "PS-011", "phase": 8, "title": "Expose production page boxes and color intent through upstream PSCat",
+    "status": "Open — upstream exporter work required", "dependsOn": ["PS-008"],
+    "scope": "Specify a minimal upstream PDF API for TrimBox/BleedBox and metadata; decide printer requirements before promising PDF/X or CMYK support.",
+    "acceptance": ["Document whether a selected printer accepts RGB proofs and what profile/standard it requires.", "Add/test trim and bleed metadata for the card, and define menu bleed geometry.", "Verify outlined type, physical sizes and crop-mark placement using independent PDF inspection.", "Keep ICC/PDF-X claims false unless validated by an appropriate preflight tool."],
+    "evidence": "docs/PRINT-PRODUCTION.md"
+  },
+  {
+    "id": "PS-012", "phase": 2, "title": "Evaluate bounded XLSX import and broader typography support",
+    "status": "Open — optional scope", "dependsOn": ["PS-002", "PS-009"],
+    "scope": "In a focused spike, evaluate a maintained XLSX reader and standard-font encodings before committing to a broader importer or font stack.",
+    "acceptance": ["Use the same MenuDocument validation and column schema after import.", "Bound compressed/expanded sizes, select sheets deterministically and never evaluate formulas.", "Decide currency/euro and multilingual support with real font/encoding tests.", "Record dependency/license/size tradeoffs; CSV remains fully usable without XLSX."],
+    "evidence": "No XLSX or language-model dependency is currently present"
+  },
+  {
+    "id": "PS-013", "phase": 7, "title": "Integrate the upstream pure PostScript QR library when its API is ready",
+    "status": "Open — blocked by upstream QR library contract", "dependsOn": ["PS-007"],
+    "scope": "Add an optional QR mark through a pinned PSCat PS library, without a Printshop encoder.",
+    "acceptance": ["Record upstream branch/commit, library license, entry point, payload encoding and supported correction levels.", "Validate payload and quiet zone, then draw vector modules inside the card safe area.", "Scan actual exported SVG/PDF/PNG fixtures independently.", "Keep QR-free rendering available with no provider/API dependency."],
+    "evidence": "docs/ARCHITECTURE.md QR integration boundary"
+  },
+  {
+    "id": "PS-014", "phase": 9, "title": "Define a versioned external PostScript template package contract",
+    "status": "Open — future platform work", "dependsOn": ["PS-009"],
+    "scope": "Specify manifest/schema, versioning, licensing, deterministic fixtures and validation before allowing external template publication.",
+    "acceptance": ["Manifest declares parameter schema, document kinds, fonts/libraries, dimensions, license and source hash.", "Validation/rendering reuse the existing deterministic API with externally enforced resource limits.", "Publishing requires review of actual rendered samples and rejection of unsupported features.", "ArtColony remains a separate authoring system; no AI dependency is added to Printshop execution."],
+    "evidence": "docs/ARCHITECTURE.md template publication boundary"
+  },
+  {
+    "id": "PS-015", "phase": 9, "title": "Specify fulfillment and MCP adapters around the existing deterministic APIs",
+    "status": "Open — future platform work", "dependsOn": ["PS-008", "PS-014"],
+    "scope": "Keep future provider quotes/orders and MCP operations small, explicit adapters over the existing model, render and preflight APIs.",
+    "acceptance": ["Define list/describe/render/validate/preflight operation schemas and deterministic result metadata.", "Use provider-neutral stock, finish, quantity, trim, bleed, side and document-hash specifications.", "Keep quotes separate from explicit order submission and credentials outside the core app.", "Downloads continue to work with no MCP server, provider or ecommerce backend."],
+    "evidence": "src/fulfillment.js; docs/ARCHITECTURE.md"
+  }
+]
