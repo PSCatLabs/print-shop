@@ -1,0 +1,143 @@
+% Shared measured layout vocabulary. Customer content is supplied separately.
+(lib/artkit.ps) run
+(lib/functional.ps) run
+
+/ps-font { % name size -- : re-encode all standard faces consistently
+  exch findfont dup length dict copy dup /Encoding ISOLatin1Encoding put
+  /PrintshopFace exch definefont exch scalefont setfont
+} bind def
+/ps-ink { Config /Ink get aload pop setrgbcolor } bind def
+/ps-accent { Config /Accent get aload pop setrgbcolor } bind def
+/ps-paper { Config /Paper get aload pop setrgbcolor } bind def
+/ps-checked-wrap { % text width -- lines; reject artkit's over-wide single word
+  12 dict begin /width exch def /text exch def
+  /lines text width tfwrap def
+  lines { stringwidth pop width 0.05 add gt { printshop-word-too-wide } if } fp-each
+  lines end
+} bind def
+/ps-lines { % lines x y leading -- next-y
+  10 dict begin /leading exch def /y exch def /x exch def /lines exch def
+  lines { x y moveto show /y y leading sub def } fp-each
+  y end
+} bind def
+/ps-title { % text max-size width x y centered --
+  12 dict begin /centered exch def /y exch def /x exch def /width exch def
+  /size exch def /text exch def
+  TitleFont size ps-font
+  /advance text stringwidth pop def
+  advance width gt { /size size width mul advance div def } if
+  size 18 lt { printshop-title-too-wide } if
+  TitleFont size ps-font
+  centered { /x x width text stringwidth pop sub 2 div add def } if
+  x y moveto text show end
+} bind def
+/ps-subtitle { % x y width centered --
+  12 dict begin /centered exch def /width exch def /y exch def /x exch def
+  /Helvetica 8.5 ps-font
+  /lines Config /Subtitle get width ps-checked-wrap def
+  lines length 2 gt { printshop-subtitle-too-long } if
+  lines {
+    /line exch def
+    centered { x width line stringwidth pop sub 2 div add } { x } ifelse
+    y moveto line show /y y 11 sub def
+  } fp-each end
+} bind def
+/ps-measure-item { % item layout -- measured item
+  25 dict begin /layout exch def /item exch def
+  /width layout /ColumnWidth get def
+  NameFont 11.5 ps-font
+  /priceWidth item /Price get stringwidth pop def
+  priceWidth width 0.42 mul gt { printshop-price-too-wide } if
+  /nameLines item /Name get width priceWidth sub 16 sub ps-checked-wrap def
+  BodyFont 10 ps-font
+  /descLines item /Description get width ps-checked-wrap def
+  /Helvetica-Oblique 8 ps-font
+  /dietLines item /Dietary get width ps-checked-wrap def
+  /Helvetica 8.5 ps-font
+  /varLines item /Variations get width ps-checked-wrap def
+  /height nameLines length 14 mul
+    descLines length 0 gt { 3 add descLines length 12.5 mul add } if
+    dietLines length 0 gt { 3 add dietLines length 10 mul add } if
+    varLines length 0 gt { 3 add varLines length 11 mul add } if
+    Config /Gap get add def
+  << /NameLines nameLines /DescLines descLines /DietLines dietLines
+     /VarLines varLines /Price item /Price get /Height height >>
+  end
+} bind def
+/ps-heading-lines { % name -- lines
+  HeadingFont 14 ps-font Layout /ColumnWidth get HeadingInset sub ps-checked-wrap
+} bind def
+/ps-start-page {
+  ps-paper 0 0 Config /W get Config /H get rectfill
+  ps-draw-header
+  ps-ink /Helvetica 7 ps-font
+  42 29 moveto Config /Business get show
+  Config /W get 75 sub 29 moveto (PAGE ) show Cursor /Page get 12 string cvs show
+  Cursor /Y Config /H get 165 sub put
+  (PSPAGE ) print Cursor /Page get =
+} bind def
+/ps-next-column {
+  Cursor /Column Cursor /Column get 1 add put
+  Cursor /Column get Config /Columns get ge {
+    showpage
+    Cursor /Page Cursor /Page get 1 add put
+    Cursor /Page get 40 gt { printshop-too-many-pages } if
+    Cursor /Column 0 put ps-start-page
+  } { Cursor /Y Config /H get 165 sub put } ifelse
+} bind def
+/ps-render-item { % measured-item category-context --
+  25 dict begin /context exch def /item exch def
+  /headingHeight context /Heading get length 18 mul 15 add def
+  /available Config /H get 165 sub 55 sub def
+  item /Height get headingHeight add available gt { printshop-item-too-tall } if
+  /required item /Height get context /First get { headingHeight add } if def
+  Cursor /Y get required sub 55 lt {
+    ps-next-column context /First true put
+  } if
+  /x 42 Cursor /Column get Layout /ColumnWidth get 30 add mul add def
+  /y Cursor /Y get def
+  context /First get {
+    context /Heading get x y ps-draw-heading /y exch def
+    context /First false put
+  } if
+  /top y def
+  ps-ink NameFont 11.5 ps-font
+  /next item /NameLines get x y 14 ps-lines def
+  x Layout /ColumnWidth get add item /Price get stringwidth pop sub y moveto item /Price get show
+  /y next def
+  BodyFont 10 ps-font
+  item /DescLines get length 0 gt {
+    /y item /DescLines get x y 3 sub 12.5 ps-lines def
+  } if
+  /Helvetica-Oblique 8 ps-font
+  item /DietLines get length 0 gt {
+    /y item /DietLines get x y 3 sub 10 ps-lines def
+  } if
+  /Helvetica 8.5 ps-font
+  item /VarLines get length 0 gt {
+    /y item /VarLines get x y 3 sub 11 ps-lines def
+  } if
+  /bottom top item /Height get sub def
+  Cursor /Y bottom put
+  Cursor /Items Cursor /Items get 1 add put
+  (PSITEM ) print Cursor /Page get 12 string cvs print ( ) print
+  Cursor /Column get 12 string cvs print ( ) print
+  top 24 string cvs print ( ) print bottom =
+  end
+} bind def
+/ps-render-category { % category --
+  12 dict begin /category exch def
+  /context << /Heading category /Name get ps-heading-lines /First true >> def
+  /items category /Items get Layout /ps-measure-item load fp-curry fp-map def
+  items context /ps-render-item load fp-curry fp-each
+  Cursor /Y Cursor /Y get 12 sub put end
+} bind def
+/ps-layout-menu {
+  /Layout << /ColumnWidth Config /W get 84 sub Config /Columns get 1 sub 30 mul sub Config /Columns get div >> def
+  /Cursor << /Page 1 /Column 0 /Y 0 /Items 0 >> def
+  ps-start-page
+  Menu /ps-render-category load fp-each
+  showpage
+  (PSDONE ) print Cursor /Page get 12 string cvs print ( ) print Cursor /Items get =
+  count 0 ne { printshop-operand-stack-leak } if
+} bind def

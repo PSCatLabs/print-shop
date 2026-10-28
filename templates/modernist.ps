@@ -1,0 +1,20 @@
+% Modernist: left-aligned sans typography, offset folio and a strong grid.
+/TitleFont /Helvetica-Bold def
+/NameFont /Helvetica-Bold def
+/BodyFont Config /Sans get { /Helvetica } { /Times-Roman } ifelse def
+/HeadingFont /Helvetica-Bold def
+/HeadingInset 0 def
+/ps-draw-header {
+  ps-ink Config /Business get 40 Config /W get 84 sub 42 Config /H get 79 sub false ps-title
+  42 Config /H get 103 sub Config /W get 84 sub false ps-subtitle
+  Config /Ornaments get {
+    ps-accent 42 Config /H get 135 sub Config /W get 84 sub 5 rectfill
+    /Helvetica-Bold 8 ps-font 42 Config /H get 44 sub moveto (THE MENU / SEASONAL EDITION) show
+  } if
+} bind def
+/ps-draw-heading {
+  10 dict begin /y exch def /x exch def /lines exch def
+  ps-accent HeadingFont 14 ps-font
+  /y lines x y 18 ps-lines def
+  y 15 sub end
+} bind def

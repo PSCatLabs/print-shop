@@ -1,0 +1,25 @@
+% Two sides; 252 x 144 pt trim centered in 270 x 162 pt bleed media.
+% No QR implementation here. Future adapter invokes the upstream PS library.
+/TitleFont /Times-Roman def
+/ps-card-lines { % text y size -- next-y
+  12 dict begin /size exch def /y exch def /text exch def
+  /Helvetica size ps-font
+  text 222 ps-checked-wrap 24 y size 1.35 mul ps-lines end
+} bind def
+/ps-layout-card {
+  ps-paper 0 0 270 162 rectfill ps-ink
+  Config /Business get 30 222 24 102 false ps-title
+  Config /Subtitle get 67 8 ps-card-lines 27 lt { printshop-card-overflow } if
+  ps-accent 24 39 222 1 rectfill showpage
+  ps-paper 0 0 270 162 rectfill ps-ink
+  /Helvetica-Bold 13 ps-font
+  Card /name get stringwidth pop 222 gt { printshop-card-name-too-wide } if
+  24 127 moveto Card /name get show
+  /y Card /role get 109 9 ps-card-lines 8 sub def
+  [ Card /email get Card /phone get Card /website get Card /address get ] {
+    dup length 0 gt { y 8.5 ps-card-lines /y exch def } { pop } ifelse
+  } fp-each
+  y 27 lt { printshop-card-overflow } if
+  showpage (PSCARD 2) =
+  count 0 ne { printshop-operand-stack-leak } if
+} bind def

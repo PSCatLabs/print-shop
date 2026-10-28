@@ -1,0 +1,27 @@
+% Retro Diner: a mid-century oblique masthead, lozenges and limited flat inks.
+/TitleFont /Helvetica-BoldOblique def
+/NameFont /Helvetica-Bold def
+/BodyFont Config /Sans get { /Helvetica } { /Times-Roman } ifelse def
+/HeadingFont /Helvetica-Bold def
+/HeadingInset Config /Ornaments get { 12 } { 0 } ifelse def
+/ps-draw-header {
+  Config /Ornaments get {
+    ps-accent 42 Config /H get 122 sub Config /W get 84 sub 80 12 rrect fill
+    ps-paper
+  } { ps-ink } ifelse
+  Config /Business get 38 Config /W get 110 sub 55 Config /H get 77 sub true ps-title
+  55 Config /H get 102 sub Config /W get 110 sub true ps-subtitle
+  Config /Ornaments get {
+    ps-accent
+    0 1 9 {
+      /n exch def 42 n Config /W get 92 sub 10 div mul add Config /H get 137 sub 6 2 rectfill
+    } for
+  } if
+} bind def
+/ps-draw-heading {
+  10 dict begin /y exch def /x exch def /lines exch def
+  ps-accent HeadingFont 14 ps-font
+  Config /Ornaments get { x y 5 add 5 5 rectfill /x x 12 add def } if
+  /y lines x y 18 ps-lines def
+  y 15 sub end
+} bind def

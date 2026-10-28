@@ -1,0 +1,46 @@
+diff --git a/src/wasm.rs b/src/wasm.rs
+index c035721..d597489 100644
+--- a/src/wasm.rs
++++ b/src/wasm.rs
+@@ -94,6 +94,8 @@ pub unsafe extern "C" fn ps_begin_scaled(
+ }
+ 
+ fn install(mut it: Interp, source: &[u8]) {
++    it.enable_svg();
++    it.enable_pdf();
+     it.capture_stdout();
+     it.begin_source(source);
+     INTERP.with(|s| *s.borrow_mut() = Some(it));
+@@ -228,3 +230,32 @@ pub extern "C" fn ps_output_len() -> usize {
+             .map_or(0, |it| it.captured_stdout().len())
+     })
+ }
++
++// Printshop adapter: reuse the existing vector recorders. Buffers live until
++// the next export/begin; callers must copy them before another WASM call.
++thread_local! {
++    static VECTOR: RefCell<Vec<u8>> = const { RefCell::new(Vec::new()) };
++}
++
++#[unsafe(no_mangle)]
++pub extern "C" fn ps_vector_export(kind: u32) -> usize {
++    let bytes = INTERP.with(|s| {
++        let slot = s.borrow();
++        let Some(it) = slot.as_ref() else {
++            return Vec::new();
++        };
++        match kind {
++            0 => serde_json::to_vec(&it.svg_pages().unwrap_or_default()).unwrap_or_default(),
++            1 => it.pdf_document().unwrap_or_default(),
++            _ => Vec::new(),
++        }
++    });
++    let len = bytes.len();
++    VECTOR.with(|v| *v.borrow_mut() = bytes);
++    len
++}
++
++#[unsafe(no_mangle)]
++pub extern "C" fn ps_vector_ptr() -> *const u8 {
++    VECTOR.with(|v| v.borrow().as_ptr())
++}

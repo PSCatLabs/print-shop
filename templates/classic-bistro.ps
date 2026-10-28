@@ -1,0 +1,26 @@
+% Classic Bistro: a centered masthead, serif hierarchy and a quiet double rule.
+/TitleFont Config /Sans get { /Helvetica } { /Times-Roman } ifelse def
+/NameFont Config /Sans get { /Helvetica-Bold } { /Times-Bold } ifelse def
+/BodyFont Config /Sans get { /Helvetica } { /Times-Roman } ifelse def
+/HeadingFont Config /Sans get { /Helvetica-Bold } { /Times-Italic } ifelse def
+/HeadingInset 0 def
+/ps-draw-header {
+  ps-ink Config /Business get 38 Config /W get 84 sub 42 Config /H get 76 sub true ps-title
+  42 Config /H get 101 sub Config /W get 84 sub true ps-subtitle
+  Config /Ornaments get {
+    ps-accent 0.65 setlinewidth
+    42 Config /H get 128 sub moveto Config /W get 42 sub Config /H get 128 sub lineto stroke
+    42 Config /H get 132 sub moveto Config /W get 42 sub Config /H get 132 sub lineto stroke
+    gsave Config /W get 2 div Config /H get 130 sub translate
+    newpath 0 4 moveto 4 0 lineto 0 -4 lineto -4 0 lineto closepath fill grestore
+  } if
+} bind def
+/ps-draw-heading { % lines x y -- next-y
+  10 dict begin /y exch def /x exch def /lines exch def
+  ps-accent HeadingFont 14 ps-font
+  /y lines x y 18 ps-lines def
+  Config /Ornaments get {
+    0.35 setlinewidth x y 1 add moveto x Layout /ColumnWidth get add y 1 add lineto stroke
+  } if
+  y 15 sub end
+} bind def
