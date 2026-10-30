@@ -1,5 +1,20 @@
 # Verification record — 2026-10-28
 
+## Publishing-script follow-up — 2026-10-30
+
+`scripts/open-pr.sh` supports the managed `.local-git/` checkout and ordinary
+Git checkouts. It runs checks, bootstraps a shared empty base for a new
+repository while preserving feature commits, pushes and opens/reuses the PR.
+The description is tracked in `.github/pull-request-mvp.md`.
+
+Six isolated publishing tests pass using actual Git histories/local bare
+repositories and mocked `gh` calls: new repository plus retry, an existing
+shared base, dirty-tree rejection, connectivity failure, an unrelated remote
+base, and a mismatched origin. Shell syntax and installed CLI flag support
+were checked. The complete `npm test` suite now passes **24 tests**, and
+`npm run build` passes. GitHub publication itself happens when the owner runs
+the script from a terminal with working network/authentication.
+
 ## Passed
 
 - Actual pinned PSCat core compiled to `wasm32-unknown-unknown` with the

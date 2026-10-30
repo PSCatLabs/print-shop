@@ -85,14 +85,28 @@ future work. See [print limitations](docs/PRINT-PRODUCTION.md).
 The managed workspace reserves `.git`, so this session stores repository
 metadata in ignored `.local-git/`. The source is a standalone Printshop working
 tree, not part of PSCat. Use `sh scripts/git-local.sh status` and other Git
-arguments in this environment. Once normal filesystem access is available:
+arguments in this environment. To publish using your terminal:
 
 ```sh
-mv .local-git .git
 gh auth status
-gh repo create PSCatLabs/printshop --public
-git remote add origin https://github.com/PSCatLabs/printshop.git
-git push -u origin feature/initial-vertical-slice
+bash scripts/open-pr.sh
+```
+
+The script supports `.git` and `.local-git/` automatically; no metadata move is
+needed. It requires a clean committed working tree, Node 22+, npm, Git and an
+authenticated `gh`. It runs the tests/build, creates **public**
+`PSCatLabs/printshop` if missing, pushes the current feature branch and opens
+or reuses its PR. It refuses a different `origin` or an unrelated remote base.
+
+For a new repository with no `main`, it creates an empty bootstrap commit and
+connects the feature history with a merge commit. Existing commits remain
+intact, and the PR against `main` includes the complete application. It never
+force-pushes or merges the PR. Optional `--repo OWNER/NAME` and `--base BRANCH`
+arguments select a different destination or base explicitly.
+
+Publish the prepared issue definitions separately when desired:
+
+```sh
 npm run issues:publish
 ```
 
