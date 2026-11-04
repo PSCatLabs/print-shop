@@ -1,10 +1,10 @@
 # Next-session handoff
 
-The standalone Printshop application is implemented on
-`feature/initial-vertical-slice`. Git metadata is in `.local-git/` because the
-managed root `.git` path is reserved. Run `sh scripts/git-local.sh log --oneline`
-to inspect commits. The publishing helper supports `.local-git/` directly;
-moving metadata is not required. Do not place these sources in PSCat.
+The standalone Printshop application is published at
+[PSCatLabs/print-shop](https://github.com/PSCatLabs/print-shop) (2026-11-04).
+Its initial history was built by Codex in a managed workspace with Git metadata
+in `.local-git/`; that is no longer used. It is an ordinary Git checkout now.
+Do not place these sources in PSCat.
 
 The actual dependency checkout used during investigation/build was
 `/tmp/printshop-pscat`; it is disposable. The committed module, unchanged
@@ -20,11 +20,8 @@ viewports in Chrome 156. Reports are tracked under `docs/verification/`.
 The remaining acceptance needs a machine that can bind localhost and run the
 headless CLI harness.
 
-1. Use terminal `gh`/`git`, as requested by the owner. Check access; create the
-   proposed `PSCatLabs/printshop` repository and PR using
-   `bash scripts/open-pr.sh`. It supports `.local-git/`, runs checks, handles a
-   new repository's shared base without rewriting commits, and reuses an open
-   PR on reruns. Publish issue definitions separately with `npm run issues:publish`.
+1. Done 2026-11-04: published to `PSCatLabs/print-shop`, issues created with
+   `npm run issues:publish`.
 2. Read architecture, investigation and print-production notes. Run `npm test`
    and `npm run build` using a working Node 22+ installation. The initial host's
    Homebrew Node had a missing dylib; the working Node was the installed nvm

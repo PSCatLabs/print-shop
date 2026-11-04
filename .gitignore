@@ -3,4 +3,3 @@ artifacts/
 node_modules/
 .DS_Store
 .engine-source/
-.local-git/

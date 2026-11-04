@@ -1,14 +1,8 @@
 # Phased implementation roadmap
 
-The intended durable ledger is GitHub Issues in `PSCatLabs/printshop`.
-The initial session could not create that repository: `gh` reports an invalid
-credential and cannot reach `api.github.com`; `git ls-remote` also reports DNS
-failure. No remote issues have been created. The 15 definitions in
-[`issues.json`](issues.json) include scope, dependencies, local status and
-independently verifiable acceptance criteria. Publish them idempotently with
-`npm run issues:publish` once the repository and CLI access exist. Their marker
-IDs survive retries and will be mapped to returned GitHub URLs in that file.
-These local IDs are not GitHub issue numbers.
+The durable ledger is GitHub Issues in `PSCatLabs/print-shop`. The 15
+definitions in [`issues.json`](issues.json) include scope, dependencies, local
+status and acceptance criteria; each maps to its GitHub issue URL.
 
 | Phase | Focus | Issue IDs | Current state |
 | --- | --- | --- | --- |

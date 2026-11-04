@@ -2,7 +2,7 @@ import {readFile,writeFile,mkdtemp,rm} from 'node:fs/promises';
 import {spawnSync} from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
-const repo='PSCatLabs/printshop';
+const repo='PSCatLabs/print-shop';
 const issues=JSON.parse(await readFile('docs/issues.json','utf8'));
 function body(issue){return `<!-- printshop:${issue.id} -->\n\n${issue.scope}\n\nLocal status: ${issue.status}\n\nDependencies: ${issue.dependsOn.length?issue.dependsOn.join(', '):'none'}.\n\nAcceptance criteria:\n\n${issue.acceptance.map(item=>'- [ ] '+item).join('\n')}\n\nImplementation/evidence: ${issue.evidence}\n\nSource definition: docs/issues.json (${issue.id}, roadmap phase ${issue.phase}).\n`;}
 if(process.argv.includes('--dry-run')){

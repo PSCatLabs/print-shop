@@ -1,5 +1,12 @@
 # Verification record — 2026-10-28
 
+## Publication — 2026-11-04
+
+Published to `PSCatLabs/print-shop` with ordinary `git push`. The
+`.local-git/` publishing helper (`scripts/open-pr.sh`), its tests and
+`scripts/git-local.sh` were retired once the repository existed; the record
+below is kept as history.
+
 ## Publishing-script follow-up — 2026-10-30
 
 `scripts/open-pr.sh` supports the managed `.local-git/` checkout and ordinary

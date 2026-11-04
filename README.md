@@ -80,40 +80,12 @@ future work. See [print limitations](docs/PRINT-PRODUCTION.md).
 - [Verification record](docs/VERIFICATION.md)
 - [Next-session handoff](docs/HANDOFF.md)
 
-## Initial repository handoff
+## Repository and issues
 
-The managed workspace reserves `.git`, so this session stores repository
-metadata in ignored `.local-git/`. The source is a standalone Printshop working
-tree, not part of PSCat. Use `sh scripts/git-local.sh status` and other Git
-arguments in this environment. To publish using your terminal:
-
-```sh
-gh auth status
-bash scripts/open-pr.sh
-```
-
-The script supports `.git` and `.local-git/` automatically; no metadata move is
-needed. It requires a clean committed working tree, Node 22+, npm, Git and an
-authenticated `gh`. It runs the tests/build, creates **public**
-`PSCatLabs/printshop` if missing, pushes the current feature branch and opens
-or reuses its PR. It refuses a different `origin` or an unrelated remote base.
-
-For a new repository with no `main`, it creates an empty bootstrap commit and
-connects the feature history with a merge commit. Existing commits remain
-intact, and the PR against `main` includes the complete application. It never
-force-pushes or merges the PR. Optional `--repo OWNER/NAME` and `--base BRANCH`
-arguments select a different destination or base explicitly.
-
-Publish the prepared issue definitions separately when desired:
-
-```sh
-npm run issues:publish
-```
-
-Repository creation and issue publishing were attempted with `gh`; network and
-authentication checks failed. None are claimed to exist remotely. The 15 issue
-definitions retain dependencies and acceptance criteria, and publication uses
-remote markers to avoid duplicates. Review the feature branch before merging.
+The repository is [PSCatLabs/print-shop](https://github.com/PSCatLabs/print-shop).
+Work is tracked in its GitHub Issues; `docs/issues.json` holds the original
+definitions (PS-001 to PS-015) and maps each to its GitHub issue. Re-running
+`npm run issues:publish` is idempotent: it matches issues by a hidden marker.
 
 Printshop application code is MIT licensed. Distributed PSCat, fonts and Rust
 dependencies retain the additional notices in [public/licenses](public/licenses/README.md).
