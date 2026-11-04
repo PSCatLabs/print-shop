@@ -170,8 +170,12 @@
 /ps-measure-category { % category -- measured category
   12 dict begin /category exch def
   /items category /Items get Layout /ps-measure-item load fp-curry fp-map def
-  << /Heading category /Name get ps-heading-lines /Items items >>
-  end
+  /measured << /Heading category /Name get ps-heading-lines /Items items >> def
+  % Refuse an item taller than a fresh column now, before measuring later
+  % categories, so the named error wins over the render budget.
+  /headingHeight measured ps-heading-height def
+  items { /Height get headingHeight add ps-column-top 55 sub gt { printshop-item-too-tall } if } fp-each
+  measured end
 } bind def
 /ps-render-category { % measured-category --
   12 dict begin /category exch def

@@ -86,6 +86,7 @@ test('A4, one column, long wrapped names, newlines and density changes',async()=
 test('over-wide words, title and oversized blocks fail; interpreter recovers',async()=>{
   const word=makeMenu(1);word.categories[0].items[0].name='W'.repeat(100);await assert.rejects(()=>render(word),/printshop-word-too-wide/);
   const tall=makeMenu(1,Array(55).fill('a').join('\n'));await assert.rejects(()=>render(tall),/printshop-item-too-tall/);
+  const tallLate=makeMenu(500,Array(120).fill('a').join('\n'));await assert.rejects(()=>render(tallLate),/printshop-item-too-tall/,'named error before the render budget');
   await assert.rejects(()=>render(menu,{businessName:'W'.repeat(80)}),/printshop-title-too-wide/);
   assert.equal((await render()).svgs.length,1);
 });
