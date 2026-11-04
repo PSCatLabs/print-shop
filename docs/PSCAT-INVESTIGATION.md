@@ -1,5 +1,11 @@
 # PSCat investigation — 2026-10-28
 
+> **Superseded for the engine pin (2026-11-04).** Printshop now builds
+> unmodified pscat `main` at `db44e12`: the vector output below was adopted
+> upstream (PSCatLabs/pscat#1004) and `lib/functional.ps` merged
+> (PSCatLabs/pscat#923). See `ARCHITECTURE.md`. The findings below are kept
+> as history.
+
 Reference: [PSCatLabs/pscat](https://github.com/PSCatLabs/pscat).
 Inspected main at `07f054c19d7045281a667e185b9bfc74f3cde29e` (0.7.0-rc.1),
 and the long-running functional branch at

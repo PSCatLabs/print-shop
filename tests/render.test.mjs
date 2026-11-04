@@ -130,7 +130,7 @@ test('preflight blocks substitutes, miscounts, bad bounds and wrong media',async
   assert.deepEqual(codes({...good,warnings:['font fallback']}),['engine-warning']);
   assert.deepEqual(codes({...good,output:good.output.replace('PSDONE 1 14','PSDONE 1 13')}),['content-count']);
   assert.deepEqual(codes({...good,output:good.output.replace(/PSITEM 1 0 [\d.]+ ([\d.]+)/,'PSITEM 1 0 700 $1')}),['layout-bounds']);
-  assert.deepEqual(codes({...good,svgs:good.svgs.map(s=>s.replace('width="612"','width="595"'))}),['media-size']);
+  assert.deepEqual(codes({...good,svgs:good.svgs.map(s=>s.replace(/width="612(pt)?"/,'width="595$1"'))}),['media-size']);
   assert.deepEqual(preflightPrint(menu,{...defaults,pageSize:'a4'},good).findings.filter(f=>f.severity==='error').map(f=>f.code),['media-size']);
   const card={kind:'business-card',name:'Alex Morgan',role:'Owner',email:'a@example.com',phone:'1',website:'example.com',address:'1 Main St'};
   const cardResult=renderer.render(compileCard(card,defaults,{common,card:await readFile('templates/business-card.ps','utf8')}));
@@ -156,5 +156,6 @@ test('preflight claims match the exported PDF bytes',async()=>{
 });
 test('shipped engine and wrapper match the provenance manifest',async()=>{
   const p=JSON.parse(await readFile('public/engine/provenance.json','utf8'));
-  for(const [file,key] of [['public/engine/pscat.wasm','wasmSha256'],['public/engine/pscat.js','wrapperSha256'],['patches/pscat-vector-wasm.patch','adapterSha256']])assert.equal(createHash('sha256').update(await readFile(file)).digest('hex'),p[key]);
+  for(const [file,key] of [['public/engine/pscat.wasm','wasmSha256'],['public/engine/pscat.js','wrapperSha256']])assert.equal(createHash('sha256').update(await readFile(file)).digest('hex'),p[key]);
+  assert.equal(p.branch,'main');assert.equal(p.patches,'none');assert.match(p.commit,/^[0-9a-f]{40}$/);
 });

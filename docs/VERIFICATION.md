@@ -1,5 +1,38 @@
 # Verification record — 2026-10-28
 
+## Engine repin to pscat main (#16) — 2026-11-04
+
+- **Source:** a fresh clone of `PSCatLabs/pscat` (never the owner's checkout)
+  at `main` `db44e121123ceb737f70daffd34c0a6853dc37a1`, which contains the
+  WASM SVG/PDF output (#1004, `c1a2852`) and `lib/functional.ps` (#923).
+  `scripts/build-engine.py --source <clone> --offline` built it unmodified
+  (`cargo rustc --lib --release --locked --target wasm32-unknown-unknown
+  --no-default-features --crate-type cdylib`, rustc 1.96.1); the script now
+  refuses a dirty checkout and applies no patch. `patches/` is gone, and
+  `provenance.json` records branch `main`, the commit, crate 0.7.0-rc.3,
+  `patches: none` and the WASM/wrapper hashes. Templates still load
+  `lib/functional.ps`, now from the engine itself, per the owner's decision.
+- **Renderer:** `begin(source, w, h, 1, {svg:true, pdf:true})`, then
+  `svgCount()`/`svg(i)` and `pdf()` from the unchanged upstream wrapper. The
+  worker and offline packaging needed no change: the packaging test still
+  runs the packaged classic worker against the new WASM.
+- **Output change, fully characterized** over menus in every template, A4,
+  sans, one column, 40 and 500 items, and the business card. Layout logs are
+  identical. SVGs are identical after mapping upstream's new
+  `width="612pt" height="792pt"` back to unitless. PDFs are identical up to the
+  `/Info` dictionary, which now carries the job's `%%Title:` (for example
+  `/Title (Printshop menu)`), and the xref offsets after it. No geometry
+  changed, so no visual change. Since a `pt`-sized SVG's intrinsic width is
+  816 CSS px, the browser check now asserts the viewBox and that width; PNG
+  export already sized itself from the page.
+- **Licences:** every file in `public/licenses/` except the generated
+  dependency page and the README is byte-identical to its upstream copy at the
+  pin. The WASM build's dependency tree is the same 32 crates as at the old
+  pin, so `wasm-dependency-licenses.html` still applies.
+- `npm test` 22/22 (including repeat determinism and the provenance test),
+  `npm run build`, the issues dry run, and `npm run test:browser` 9/9 in all
+  four configurations. The preview was viewed after the change.
+
 ## Print preflight (PS-008) — 2026-11-04
 
 - Probed the engine: `findfont` on an unknown name returns a fallback with no

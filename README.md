@@ -42,10 +42,10 @@ can start from a file origin. The served edition uses ordinary module workers.
 - A QR-free front/back business card at 3.5 × 2 in trim plus 1/8 in bleed.
 - Print preflight that distinguishes vector proofs from production certification.
 
-The engine is PSCat **0.6.3 from `feature/functional-postscript`**, pinned at
-`e8d6cf29a3e9ae62390a834961df2fdb58c7d78e`, with a small vector ABI adapter.
-Main and released/npm builds must not be substituted without checking their
-capabilities. Source/patch/artifact hashes are in
+The engine is unmodified PSCat **`main` at `db44e12`** (crate 0.7.0-rc.3),
+which includes the WASM SVG/PDF output (PSCatLabs/pscat#1004) and
+`lib/functional.ps` (PSCatLabs/pscat#923). Neither is in a pscat release yet,
+so an older release or the current npm package must not be substituted. Source/patch/artifact hashes are in
 [`public/engine/provenance.json`](public/engine/provenance.json).
 
 ## Verification and engine rebuilding
@@ -70,8 +70,8 @@ The rendering API, generated documents and offline browser workflow are
 verified in both the offline and served editions. Production PDF metadata
 remains unfinished. PDFs use RGB
 and outlined type, with no ICC output intent, PDF/X certification, TrimBox,
-BleedBox or crop marks. Menus have no additional bleed. QR awaits the separate
-upstream PS library; XLSX, arbitrary template import, fulfillment and MCP are
+BleedBox or crop marks. Menus have no additional bleed. QR awaits
+integration of pscat's `lib/qr.ps` (#13); XLSX, arbitrary template import, fulfillment and MCP are
 future work. See [print limitations](docs/PRINT-PRODUCTION.md).
 
 - [Architecture and decisions](docs/ARCHITECTURE.md)

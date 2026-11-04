@@ -21,7 +21,7 @@ HTMLAnchorElement.prototype.click=function(){captured.push({url:this.href,name:t
 try{
   await check('initial sample renders actual vector SVG',async()=>{
     const svg=await preview();assert(svg.includes('<path '),'No vector geometry');assert(!svg.includes('<image'),'Raster approximation');
-    assert($('preview').naturalWidth===612,'Wrong preview page width');assert($('item-summary').textContent.includes('14 items'),'Missing imported items');
+    assert(svg.includes('viewBox="0 0 612 792"')&&$('preview').naturalWidth===816,'Wrong preview page size (612 pt = 816 CSS px)');assert($('item-summary').textContent.includes('14 items'),'Missing imported items');
   });
   const initial=await preview();
   await check('business name and palette rerender',async()=>{

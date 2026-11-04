@@ -1,12 +1,11 @@
 {
   "repository": "https://github.com/PSCatLabs/pscat",
-  "branch": "feature/functional-postscript",
-  "commit": "e8d6cf29a3e9ae62390a834961df2fdb58c7d78e",
-  "crateVersion": "0.6.3",
-  "adapter": "patches/pscat-vector-wasm.patch",
-  "adapterSha256": "840e1cac5182384ad1551e6e35a67dd7989c6326186cded6e83029b4fc54255d",
-  "wasmSha256": "b51b32c71a917ae06ca9e8e010c82faf22ce887fa210f86e9932f941eeba5771",
-  "wrapperSha256": "7b7059815d3e72675bc16bfaaeb6a9eb3405f97d65250a4d1ae5a10c9662ae3d",
+  "branch": "main",
+  "commit": "db44e121123ceb737f70daffd34c0a6853dc37a1",
+  "crateVersion": "0.7.0-rc.3",
+  "patches": "none",
+  "wasmSha256": "c445aa3c1da859bb37a491b01453d202b3816d6b4e3dafe5271181bd895518ee",
+  "wrapperSha256": "f224ff551891e72efa4b09e048f955f6f8d8a13aa36cf4da27350697fe637cf6",
   "rustc": "rustc 1.96.1 (31fca3adb 2026-06-26)",
   "license": "(MIT OR Apache-2.0) AND OFL-1.1 AND LPPL-1.3c"
 }
