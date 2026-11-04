@@ -3,3 +3,9 @@ artifacts/
 node_modules/
 .DS_Store
 .engine-source/
+
+# sdlcify: common ignores
+.env
+.env.local
+*.swp
+*.swo

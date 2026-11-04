@@ -24,3 +24,12 @@ before changing rendering. `docs/ROADMAP.md` links the durable issue definitions
 - Print preflight must distinguish a downloadable proof from a production-
   certified file. Document exporter limitations in the UI as well as docs.
 - No external orchestration database or independent MCP rendering pipeline.
+
+<!-- sdlcify:managed:start -->
+## SDLC
+
+`SDLC.md` is the authoritative record of this repo's development
+lifecycle (issue → feature branch → PR → CI → independent Codex review →
+merge → cleanup) and the branch-protection/merge policy currently
+enforced on GitHub — generated and kept in sync by the `sdlcify` skill.
+<!-- sdlcify:managed:end -->
