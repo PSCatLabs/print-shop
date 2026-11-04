@@ -6,11 +6,10 @@ Its initial history was built by Codex in a managed workspace with Git metadata
 in `.local-git/`; that is no longer used. It is an ordinary Git checkout now.
 Do not place these sources in PSCat.
 
-The actual dependency checkout used during investigation/build was
-`/tmp/printshop-pscat`; it is disposable. The committed module, unchanged
-wrapper, patch and provenance are sufficient for tests and packaging without
-that directory. To rebuild, clone the exact recorded feature commit into a
-dedicated directory and use `scripts/build-engine.py`. No modifications were
+The committed module, unchanged wrapper and provenance are sufficient for
+tests and packaging without a pscat checkout. To rebuild, clone pscat at the
+commit in `public/engine/provenance.json` into a dedicated directory and run
+`scripts/build-engine.py --source <dir>`. No modifications were
 made to the separate ongoing QR project.
 
 ## State and next tasks
@@ -29,21 +28,14 @@ host's Homebrew Node was broken.
   media size, counts and bounds; `ps-font` refuses a substituted face; a test
   ties every stated exporter limitation to the PDF bytes. See
   `docs/PRINT-PRODUCTION.md`.
-- Next: #16, repin to pscat. The WASM SVG/PDF output landed on pscat `main`
-  on 2026-11-04 (PSCatLabs/pscat#1004, `c1a2852`, not yet in a release); its
-  final ABI and the mapping from `patches/` are in
-  [the comment on #16](https://github.com/PSCatLabs/print-shop/issues/16#issuecomment-6645065907).
-  **Owner decision (2026-11-04):** keep `lib/functional.ps`
-  (`fp-map`/`fp-each`/`fp-curry`) in the templates and pick it up from pscat
-  at the repin, so the repin waits only for the functional library to reach
-  pscat `main` (PSCatLabs/pscat#923). #16's acceptance line "No template uses
-  lib/functional.ps" is superseded. Then: build from a fresh clone of pscat
-  `origin/main` with `scripts/build-engine.py`, adapt `src/renderer.js`,
-  `src/render-worker.js` and the offline packaging to `begin(..., {svg, pdf})`
-  / `svgCount()` / `svg(i)` / `pdf()`, drop `patches/`, update
-  `public/engine/provenance.json`, and run every test and the browser checks.
-- Then #13 (QR): pscat's `lib/qr.ps` is on `main` (`docs/guides/qr-codes.md`
-  there); it is blocked only by the #16 repin.
+- #16 is done: the engine is unmodified pscat `main` at `db44e12` (vector
+  output from PSCatLabs/pscat#1004, `lib/functional.ps` from #923), with no
+  `patches/`. It is not in a pscat release yet; repin to the first release
+  that includes both when it ships (`scripts/build-engine.py`, update `PIN`).
+  The templates keep `fp-map`/`fp-each`/`fp-curry` per the owner's decision.
+- Next: #13 (QR) through pscat's `lib/qr.ps` (on `main`, see
+  `docs/guides/qr-codes.md` upstream). Scan exported SVG/PDF/PNG with an
+  independent decoder.
 - Deferred: #12, #14, #15, #17.
 
 ## What works under automated verification

@@ -1,8 +1,7 @@
 # Distributed dependency notices
 
-Printshop distributes PSCat at the exact source commit in
-`../engine/provenance.json`, plus the vector ABI patch in the application
-repository. The JavaScript wrapper is copied unchanged. The WASM core code is
+Printshop distributes unmodified PSCat at the exact source commit in
+`../engine/provenance.json`. The JavaScript wrapper is copied unchanged. The WASM core code is
 MIT OR Apache-2.0; compiled-in font/library assets additionally carry OFL-1.1
 and LPPL-1.3c/GUST terms.
 
@@ -13,11 +12,13 @@ and LPPL-1.3c/GUST terms.
 - `THIRD_PARTY_NOTICES.md`: unchanged upstream copyright/component inventory.
   Repository-relative links in that document refer to the upstream PSCat tree.
 - `wasm-dependency-licenses.html`: complete generated dependency license texts
-  from the pinned functional studio, whose dependency set is unchanged by the
-  vector bridge.
+  originally from the functional studio. The WASM build's dependency tree at the
+  current pin (`cargo tree --target wasm32-unknown-unknown --no-default-features`)
+  is the same 32 crates, so the texts still apply. Every other file here is
+  byte-identical to its upstream copy at the pin.
 - `LICENSE-CC0`: upstream public-domain dedication for example materials.
 
-Upstream: https://github.com/PSCatLabs/pscat/tree/e8d6cf29a3e9ae62390a834961df2fdb58c7d78e
+Upstream: https://github.com/PSCatLabs/pscat/tree/db44e121123ceb737f70daffd34c0a6853dc37a1
 
 Printshop's original UI, templates and application code use the root MIT
 license. Redistribution of the WASM must retain its additional notices.

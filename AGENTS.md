@@ -6,8 +6,9 @@ before changing rendering. `docs/ROADMAP.md` links the durable issue definitions
 - Printable composition belongs in PostScript. No HTML/CSS/canvas document
   layout, screenshot export, image model, LLM dependency, backend, or API key.
 - Keep structured content, template/style, rendering, and browser UI separate.
-- Use the upstream commit and adapter recorded in `public/engine/provenance.json`.
-  Never imply the functional libraries or vector ABI are available on main/npm.
+- Use the unmodified upstream commit recorded in `public/engine/provenance.json`
+  (pscat `main`; no local patches). Note that it is not yet in a pscat release,
+  so do not imply the npm package has these features until one ships.
 - Use issues, a focused feature branch, meaningful checks, and coherent commits.
   If GitHub is unavailable, record an issue in `docs/issues/` for publication.
 - Run `npm test` and `npm run build` for implementation changes. Run

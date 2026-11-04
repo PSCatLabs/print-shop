@@ -21,15 +21,20 @@ Future MCP operations call these APIs; no separate rendering implementation.
 
 ## Decisions
 
-1. **Pin the functional feature branch.** Dependency is PSCat
-   `e8d6cf29a3e9ae62390a834961df2fdb58c7d78e`, crate 0.6.3. It is not the newer
-   main release. `fp-map`, `fp-each`, and `fp-curry` are used by the measured
-   item pipeline; they are real PS library procedures, not JS emulations.
-2. **Bridge existing vector recorders.** The original `web/pscat.js` is copied
-   unchanged. A checked-in patch enables `Interp::enable_svg/enable_pdf` before
-   execution and adds two C ABI exports to copy serializer results. No changes
-   to parser, operators, fonts, measurement, drawing, or serializers. SVG and
+1. **Pin an unmodified upstream commit.** Dependency is PSCat `main` at
+   `db44e121123ceb737f70daffd34c0a6853dc37a1` (crate 0.7.0-rc.3), built without patches. It is not in a release
+   yet. `fp-map`, `fp-each`, and `fp-curry` (`lib/functional.ps`, embedded in
+   the WASM build) are used by the measured item pipeline; they are real PS
+   library procedures, not JS emulations. Until 2026-11-04 the pin was the
+   `feature/functional-postscript` commit `e8d6cf2` plus a local vector patch,
+   which upstream adopted as PSCatLabs/pscat#1004.
+2. **Use upstream's vector recorders.** `web/pscat.js` is copied unchanged.
+   `begin(source, w, h, 1, {svg:true, pdf:true})` records the run; the
+   renderer reads `svgCount()`/`svg(i)` and `pdf()` after it completes. SVG and
    PDF are captured together, without rerunning content for each format.
+   Upstream SVGs declare their size in points (`width="612pt"`), so a Letter
+   preview's intrinsic size is 816 CSS px; PNG export sizes from the page
+   size, not the image.
 3. **PostScript owns layout.** `stringwidth` and artkit `tfwrap` measure names,
    descriptions, dietary labels and add-ons using the actual fonts. Blocks
    reserve a measured price area, stay together, flow columns then pages, and
