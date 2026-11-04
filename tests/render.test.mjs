@@ -121,6 +121,39 @@ test('preflight reports missing output and exporter limitations truthfully',asyn
   const report=preflightPrint(menu,defaults,await render());assert.equal(report.readyForReview,true);assert.equal(report.productionCertified,false);
   assert.ok(report.findings.some(f=>f.code==='rgb-output'));assert.ok(report.findings.some(f=>f.code==='menu-no-bleed'));
 });
+test('preflight blocks substitutes, miscounts, bad bounds and wrong media',async()=>{
+  const src=await sources();
+  const job=compileMenu(menu,defaults,{...src,template:src.template.replace("/NameFont Config /Sans get { /Helvetica-Bold } { /Times-Bold } ifelse def","/NameFont /Palatino-Roman def")});
+  assert.throws(()=>renderer.render(job),/printshop-font-substituted/,'an aliased face is refused, not silently substituted');
+  const good=await render();const codes=r=>preflightPrint(menu,defaults,r).findings.filter(f=>f.severity==='error').map(f=>f.code);
+  assert.deepEqual(codes(good),[]);
+  assert.deepEqual(codes({...good,warnings:['font fallback']}),['engine-warning']);
+  assert.deepEqual(codes({...good,output:good.output.replace('PSDONE 1 14','PSDONE 1 13')}),['content-count']);
+  assert.deepEqual(codes({...good,output:good.output.replace(/PSITEM 1 0 [\d.]+ ([\d.]+)/,'PSITEM 1 0 700 $1')}),['layout-bounds']);
+  assert.deepEqual(codes({...good,svgs:good.svgs.map(s=>s.replace('width="612"','width="595"'))}),['media-size']);
+  assert.deepEqual(preflightPrint(menu,{...defaults,pageSize:'a4'},good).findings.filter(f=>f.severity==='error').map(f=>f.code),['media-size']);
+  const card={kind:'business-card',name:'Alex Morgan',role:'Owner',email:'a@example.com',phone:'1',website:'example.com',address:'1 Main St'};
+  const cardResult=renderer.render(compileCard(card,defaults,{common,card:await readFile('templates/business-card.ps','utf8')}));
+  assert.equal(preflightPrint(card,defaults,cardResult).readyForReview,true);
+  assert.deepEqual(preflightPrint(card,defaults,{...cardResult,svgs:cardResult.svgs.slice(0,1)}).findings.filter(f=>f.severity==='error').map(f=>f.code),['media-size','content-count']);
+  const report=preflightPrint(menu,defaults,good);
+  assert.equal(report.productionCertified,false);assert.ok(report.findings.some(f=>f.code==='proof-not-certified'));
+});
+test('preflight claims match the exported PDF bytes',async()=>{
+  const card={kind:'business-card',name:'Alex Morgan',role:'Owner',email:'a@example.com',phone:'1',website:'example.com',address:'1 Main St'};
+  const outputs=[await render(),await render(menu,{template:'retro-diner',palette:'teal'}),
+    renderer.render(compileCard(card,defaults,{common,card:await readFile('templates/business-card.ps','utf8')}))];
+  for(const r of outputs){
+    const pdf=Buffer.from(r.pdf).toString('latin1');
+    assert.match(pdf,/^%PDF-1\.4/,'"PDF 1.4"');
+    assert.doesNotMatch(pdf,/\/Font\b|\/FontFile/,'"outlined type": no fonts in the PDF');
+    assert.doesNotMatch(pdf,/\/OutputIntents?\b|GTS_PDFX|\/ICCBased/,'"no ICC output intent or PDF/X"');
+    assert.doesNotMatch(pdf,/\/TrimBox|\/BleedBox/,'"no TrimBox/BleedBox"');
+    const ops=new Set([...pdf.matchAll(/stream\n([\s\S]*?)\nendstream/g)].flatMap(m=>inflateSync(Buffer.from(m[1],'latin1')).toString().split(/\s+/)).filter(t=>/^[A-Za-z]+$/.test(t)));
+    assert.ok(ops.has('rg'),'RGB fills');
+    for(const op of ['k','K','g','G','cs','CS','sc','SC','scn','SCN','Do','BT'])assert.ok(!ops.has(op),`"RGB vector only": unexpected ${op}`);
+  }
+});
 test('shipped engine and wrapper match the provenance manifest',async()=>{
   const p=JSON.parse(await readFile('public/engine/provenance.json','utf8'));
   for(const [file,key] of [['public/engine/pscat.wasm','wasmSha256'],['public/engine/pscat.js','wrapperSha256'],['patches/pscat-vector-wasm.patch','adapterSha256']])assert.equal(createHash('sha256').update(await readFile(file)).digest('hex'),p[key]);

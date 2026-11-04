@@ -3,7 +3,9 @@
 (lib/functional.ps) run
 
 /ps-font { % name size -- : re-encode all standard faces consistently
-  exch findfont dup length dict copy dup /Encoding ISOLatin1Encoding put
+  % findfont silently falls back for an unknown name; refuse a substitute.
+  exch dup findfont dup /FontName get 3 -1 roll ne { printshop-font-substituted } if
+  dup length dict copy dup /Encoding ISOLatin1Encoding put
   /PrintshopFace exch definefont exch scalefont setfont
 } bind def
 /ps-ink { Config /Ink get aload pop setrgbcolor } bind def

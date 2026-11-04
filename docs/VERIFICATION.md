@@ -1,5 +1,25 @@
 # Verification record — 2026-10-28
 
+## Print preflight (PS-008) — 2026-11-04
+
+- Probed the engine: `findfont` on an unknown name returns a fallback with no
+  warning (`/NoSuchFont` gives `/Helvetica`, `/Palatino-Roman` gives
+  `/texgyrepagella-regular`), so the old warnings-based substitution check
+  could never fire. `ps-font` now refuses a face whose resolved `FontName`
+  differs (`printshop-font-substituted`); a test renders a template patched to
+  `/Palatino-Roman` and expects that error. All 74 comparison files (menus in
+  every template and size, 1–500 items) and the business card are
+  byte-identical to `main` with the check in place.
+- Preflight now also blocks on media size (PDF MediaBox, SVG size, result
+  size) and on a card that is not exactly front and back. A test tampers with a
+  real result for each blocking check and expects exactly that finding.
+- A test checks every stated limitation against real menu and card PDFs: PDF
+  1.4, no font objects, no output intent/ICC/PDF/X, no TrimBox/BleedBox, and
+  only `rg`/`RG` color operators.
+- References: PGprint's guide (PDF text extracted) and Ghostscript's PDF/X
+  documentation were fetched and quoted in `PRINT-PRODUCTION.md`. Adobe's help
+  pages return 403 to automated fetches and are listed as unverified further
+  reading.
 ## Column balancing and lone continuations (PS-010) — 2026-11-04
 
 `templates/common.ps` now measures each category once, lazily, and runs one flow

@@ -19,8 +19,7 @@ and back are separate pages with no imposition or duplex flipping assumption.
 
 The PS layout refuses over-wide words, prices and names, over-tall items, card
 contact overflow, oversized subtitles and more than 40 pages. UI data/schema
-checks run before composition. Preflight validates completed result presence,
-item/page counts, measured menu bounds and font substitution warnings.
+checks run before composition. Preflight checks are described below.
 
 ## Exporter findings at the pinned commit
 
@@ -40,19 +39,71 @@ item/page counts, measured menu bounds and font substitution warnings.
 No SVG-to-PDF conversion or browser print dialog is used. SVG and PDF are native
 recordings of the same paint events in one interpreter run.
 
+## How preflight decides (PS-008)
+
+`src/preflight.js` is a pure function used by the UI and future MCP adapters.
+It **blocks** export (error findings; download buttons stay disabled) when:
+
+- there is no completed SVG and PDF (`missing-render`);
+- the engine reported any warning (`engine-warning`);
+- a PDF MediaBox, SVG size or result size differs from the selected page or
+  the 270 × 162 pt card media (`media-size`);
+- the page or item count differs from the document, or a card is not exactly
+  front and back (`content-count`);
+- a menu item lies outside the measured layout area (`layout-bounds`).
+
+Font substitution cannot reach preflight. PSCat's `findfont` silently falls
+back for an unknown name (`/NoSuchFont` becomes Helvetica; `/Palatino-Roman`
+becomes TeX Gyre Pagella) without a warning, so `ps-font` in
+`templates/common.ps` compares the resolved `FontName` with the requested one
+and fails the render with `printshop-font-substituted`. Every face the bundled
+templates use resolves to itself; the check leaves output byte-identical.
+
+It **warns** about RGB PDF 1.4 output without ICC output intent, CMYK
+separation or PDF/X, and about missing TrimBox/BleedBox, crop marks and menu
+bleed. It always ends with `proof-not-certified`: passing means a complete
+proof ready for review, never certified print readiness
+(`productionCertified` is always `false`). A test ("preflight claims match the
+exported PDF bytes") checks each stated limitation against real exports: PDF
+1.4 header, no font objects, no output intent/ICC/PDF/X identifiers, no
+TrimBox/BleedBox, and only RGB color operators. If a future engine adds any
+of these, that test fails until this text and the findings are updated.
+
+## Printer requirements compared
+
+PGprint's file-preparation guide (verified 2026-11-04) is a representative
+commercial printer's specification:
+
+| Requirement | PGprint | Printshop today |
+| --- | --- | --- |
+| Card size | 3.5 × 2 in finished size | 252 × 144 pt trim (3.5 × 2 in) |
+| Bleed | "usually 1/8 inch"; extend color "at least .125 inches past your page size" | Card: 9 pt (1/8 in) on all sides. Menu: none |
+| Safe area | 3.25 × 1.75 in "safe zone" (1/8 in inside trim) | Card text inside a 24 pt media inset, 15 pt inside trim |
+| Marks | "save the file as a .PDF with crops and bleeds" | No crop marks; trim must be given as instructions |
+| Color | Select colors "using CMYK definitions instead of RGB"; RGB must be converted | RGB only; preflight warns |
+
+Ghostscript's PDF/X documentation (verified 2026-11-04) lists what a PDF/X
+file needs and Printshop lacks: an output-intent definition
+(`OutputConditionIdentifier`, optionally an ICC profile), Trim or Art boxes
+"for all page descriptions", and Gray or CMYK color ("RGB is not allowed").
+Preflight therefore never claims PDF/X. Upstream page boxes and color intent
+are PS-011.
+
 ## Primary references
 
+- [PGprint file preparation guidelines](https://www.pgprint.com/online-printing/downloads/PGPrint_FilePreparationGuidelines.pdf):
+  bleed, safe zone, crop marks and CMYK for a 3.5 × 2 in card. Text extracted
+  and checked 2026-11-04. Provider-specific templates still take precedence.
+- [Ghostscript: creating a PDF/X document](https://ghostscript.readthedocs.io/en/latest/VectorDevices.html):
+  output intent, required Trim/Art boxes and the RGB exclusion. Checked
+  2026-11-04.
+
+Further reading, cited by the original investigation. Adobe's help site
+refuses automated fetches, so these were not re-checked on 2026-11-04:
+
 - [Adobe PDF marks, bleeds and color output](https://helpx.adobe.com/illustrator/desktop/save-and-export/export-files-to-different-formats/pdf-marks-bleeds-and-color-output-options.html)
-  documents trim marks, a typical 0.125 in bleed and PDF/X output-intent settings.
 - [Adobe PDF settings](https://helpx.adobe.com/acrobat/desktop/create-documents/explore-advanced-conversion-settings/pdf-settings-overview.html)
-  explains that output intent identifies the intended printing condition for
-  PDF/X compliance, along with trim/bleed box settings.
 - [Adobe output preview](https://helpx.adobe.com/acrobat/using/previewing-output-acrobat-pro.html)
-  describes color warnings, separations and page-box inspection. A visual
-  screen proof alone does not validate every printing/finishing setting.
-- [PGprint file preparation](https://www.pgprint.com/online-printing/downloads/PGPrint_FilePreparationGuidelines.pdf)
-  gives a printer's example of 3.5 × 2 in cards, extra bleed and a safe design
-  area. Provider-specific templates still take precedence.
 
 Next work is PS-011 in `issues.json`: specify upstream page-box/output-intent
 requirements, verify actual PDF metadata independently, and only then consider

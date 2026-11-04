@@ -72,6 +72,7 @@ function friendlyError(message){
     'printshop-card-overflow':'The contact details exceed the safe area. Shorten them.',
     'printshop-card-name-too-wide':'The name exceeds the card’s safe area. Shorten it.',
     'printshop-too-many-pages':'The document exceeds 40 pages. Reduce the number of items.',
+    'printshop-font-substituted':'A template font is not available in this engine, so it would be substituted. Report this template.',
   };
   return Object.entries(errors).find(([key])=>message.includes(key))?.[1]||message;
 }
