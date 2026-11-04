@@ -19,7 +19,9 @@ function parameters(){
     palette:$('palette').value,typography:$('typography').value,pageSize:$('page-size').value,
     columns:Number($('columns').value),density:$('density').value,ornaments:$('ornaments').checked};
 }
-function card(){return {kind:'business-card',...Object.fromEntries(['name','role','email','phone','website','address','qr'].map(key=>[key,normalizeText($('card-'+key).value)]))};}
+// The QR payload is data, not display text: never normalize it, so an unsupported
+// character is rejected rather than silently changing where the code points.
+function card(){const qr=$('card-qr').value;return {kind:'business-card',...Object.fromEntries(['name','role','email','phone','website','address'].map(key=>[key,normalizeText($('card-'+key).value)])),qr:qr.trim()?qr:''};}
 function displayPage(){
   if (!result) return;
   if(previewURL)URL.revokeObjectURL(previewURL);

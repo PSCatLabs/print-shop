@@ -63,6 +63,8 @@ try{
     $('next').click();await preview();assert($('page-number').textContent.includes('Back'),'Card back missing');
   });
   await check('card QR code from pscat lib/qr.ps decodes from the exported PNG',async()=>{
+    input('card-qr','https://example.com/menu\u20142026');await done('error');
+    assert($('status').textContent.includes('plain ASCII'),'A typographic dash must be rejected, not rewritten');assert($('export-png').disabled,'Exports stay disabled');
     const link='https://example.com/menu?table=12';
     input('card-qr',link);await preview();
     if($('page-number').textContent.includes('Front')){$('next').click();await preview();}
