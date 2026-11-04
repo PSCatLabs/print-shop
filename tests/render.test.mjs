@@ -40,6 +40,34 @@ test('small, medium and 500-item menus flow completely within measured column bo
     if(n===40)await saveArtifact('paginated-40-items',r);
   }
 });
+// Group PSITEM placements into category pieces (a category's run of items in one column).
+function pieces(output,sizes){
+  const placed=[...output.matchAll(/PSITEM (\d+) (\d+) ([\d.]+) ([\d.]+)/g)].map(m=>m.slice(1).map(Number));
+  assert.equal(placed.length,sizes.reduce((a,b)=>a+b,0),'every item exactly once');
+  let i=0;return sizes.map(n=>{const runs=[];for(const [page,column,top,bottom] of placed.slice(i,i+n)){
+    const last=runs.at(-1);if(last&&last.page===page&&last.column===column){last.count++;last.bottom=bottom;}else runs.push({page,column,top,bottom,count:1});}
+    i+=n;return runs;});
+}
+const shortMenu=sizes=>({kind:'menu',categories:sizes.map((n,c)=>({name:`Section ${c+1}`,items:Array.from({length:n},(_,i)=>({name:`Dish ${c+1}.${i+1}`,description:i%2?'Garden vegetables with herbs and toasted almonds':'',price:'12',dietary:'',variations:''}))}))});
+test('a category never ends with its final item alone in a new column',async()=>{
+  const sizes=menu.categories.map(c=>c.items.length);
+  for(const t of templates){const runs=pieces((await render(menu,{template:t.id})).output,sizes);
+    assert.ok(runs.some(r=>r.length>1),'the sample splits a category');
+    for(const r of runs)if(r.length>1)assert.ok(r.at(-1).count>=2,`${t.id}: lone continuation`);}
+  for(const n of [40,500]){const data=makeMenu(n);const r=await render(data);
+    for(const runs of pieces(r.output,data.categories.map(c=>c.items.length)))if(runs.length>1)assert.ok(runs.at(-1).count>=2,`${n} items: lone continuation`);}
+});
+test('short two-column menus are balanced without splitting categories needlessly',async()=>{
+  const sample=pieces((await render()).output,menu.categories.map(c=>c.items.length)).flat();
+  const bottom=column=>Math.min(...sample.filter(p=>p.column===column).map(p=>p.bottom));
+  assert.ok(Math.abs(bottom(0)-bottom(1))<60,'sample columns end within one item of each other');
+  const three=pieces((await render(shortMenu([3]))).output,[3]);
+  assert.deepEqual(three[0].map(p=>[p.column,p.count]),[[0,3]],'a three-item category is not split 1 + 2');
+  const six=pieces((await render(shortMenu([2,4]))).output,[2,4]);
+  assert.deepEqual(six.map(runs=>runs.map(p=>[p.column,p.count])),[[[0,2]],[[1,4]]],'two short categories take a column each');
+  const one=pieces((await render(shortMenu([2,4]),{columns:1})).output,[2,4]);
+  assert.ok(one.flat().every(p=>p.column===0),'one column is never balanced');
+});
 test('A4, one column, long wrapped names, newlines and density changes',async()=>{
   const data=makeMenu(20,'Fresh seasonal vegetables with toasted almonds\nServed with bread and a bright lemon dressing.');
   data.categories[0].items[0].name='Slow-roasted garden vegetables with herbs and farmhouse cheese';

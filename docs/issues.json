@@ -170,7 +170,7 @@
     "id": "PS-010",
     "phase": 4,
     "title": "Avoid lone category continuations and balance short two-column menus",
-    "status": "Open",
+    "status": "Implemented 2026-11-04: lone-continuation look-ahead and one-page column balancing",
     "dependsOn": [
       "PS-004",
       "PS-009"
@@ -182,7 +182,7 @@
       "Keep every item exactly once, never shrink type to hide overflow, and preserve existing large-menu bounds tests.",
       "Add focused PS layout fixtures rather than a second JS layout engine."
     ],
-    "evidence": "Current greedy layout is documented in docs/ARCHITECTURE.md",
+    "evidence": "templates/common.ps; tests/render.test.mjs; docs/VERIFICATION.md; docs/verification/ps-010/",
     "url": "https://github.com/PSCatLabs/print-shop/issues/10"
   },
   {

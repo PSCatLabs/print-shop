@@ -67,76 +67,137 @@
 /ps-heading-lines { % name -- lines
   HeadingFont 14 ps-font Layout /ColumnWidth get HeadingInset sub ps-checked-wrap
 } bind def
+/ps-column-top { Config /H get 165 sub } bind def
+/ps-heading-height { % context -- height; every template's ps-draw-heading advances this much
+  /Heading get length 18 mul 15 add
+} bind def
 /ps-start-page {
   ps-paper 0 0 Config /W get Config /H get rectfill
   ps-draw-header
   ps-ink /Helvetica 7 ps-font
   42 29 moveto Config /Business get show
   Config /W get 75 sub 29 moveto (PAGE ) show Cursor /Page get 12 string cvs show
-  Cursor /Y Config /H get 165 sub put
+  Cursor /Y ps-column-top put
   (PSPAGE ) print Cursor /Page get =
 } bind def
 /ps-next-column {
   Cursor /Column Cursor /Column get 1 add put
   Cursor /Column get Config /Columns get ge {
-    showpage
+    Drawing { showpage } if
     Cursor /Page Cursor /Page get 1 add put
-    Cursor /Page get 40 gt { printshop-too-many-pages } if
-    Cursor /Column 0 put ps-start-page
-  } { Cursor /Y Config /H get 165 sub put } ifelse
+    Drawing Cursor /Page get 40 gt and { printshop-too-many-pages } if
+    Cursor /Column 0 put
+    Drawing { ps-start-page } { Cursor /Y ps-column-top put } ifelse
+  } { Cursor /Y ps-column-top put } ifelse
 } bind def
+% Place one measured item. Positions come only from measured heights, so a dry
+% pass (Drawing false) computes exactly the layout a drawn pass produces.
 /ps-render-item { % measured-item category-context --
   25 dict begin /context exch def /item exch def
-  /headingHeight context /Heading get length 18 mul 15 add def
-  /available Config /H get 165 sub 55 sub def
+  context /Index context /Index get 1 add put
+  /headingHeight context ps-heading-height def
+  /available ps-column-top 55 sub def
   item /Height get headingHeight add available gt { printshop-item-too-tall } if
   /required item /Height get context /First get { headingHeight add } if def
-  Cursor /Y get required sub 55 lt {
-    ps-next-column context /First true put
+  /break Cursor /Y get required sub Floor lt def
+  % Look-ahead: when this is the penultimate item, the last would not fit after
+  % it, and the column already holds something, move the pair together rather
+  % than leave the category's final item alone under a repeated heading.
+  break not context /Index get context /Items get length 2 sub eq and
+  Cursor /Y get ps-column-top lt and {
+    /last context /Items get context /Index get 1 add get /Height get def
+    Cursor /Y get required sub last sub Floor lt
+    headingHeight item /Height get add last add ps-column-top Floor sub le and {
+      /break true def
+    } if
+  } if
+  break {
+    % A break inside a category leaves a piece behind; count single-item pieces.
+    context /First get not {
+      context /Piece get 1 eq { Cursor /Lone Cursor /Lone get 1 add put } if
+      context /Split true put
+    } if
+    ps-next-column context /First true put context /Piece 0 put
   } if
   /x 42 Cursor /Column get Layout /ColumnWidth get 30 add mul add def
   /y Cursor /Y get def
   context /First get {
-    context /Heading get x y ps-draw-heading /y exch def
+    Drawing { context /Heading get x y ps-draw-heading pop } if
+    /y y headingHeight sub def
     context /First false put
   } if
   /top y def
-  ps-ink NameFont 11.5 ps-font
-  /next item /NameLines get x y 14 ps-lines def
-  x Layout /ColumnWidth get add item /Price get stringwidth pop sub y moveto item /Price get show
-  /y next def
-  BodyFont 10 ps-font
-  item /DescLines get length 0 gt {
-    /y item /DescLines get x y 3 sub 12.5 ps-lines def
-  } if
-  /Helvetica-Oblique 8 ps-font
-  item /DietLines get length 0 gt {
-    /y item /DietLines get x y 3 sub 10 ps-lines def
-  } if
-  /Helvetica 8.5 ps-font
-  item /VarLines get length 0 gt {
-    /y item /VarLines get x y 3 sub 11 ps-lines def
-  } if
   /bottom top item /Height get sub def
+  bottom Floor lt { Cursor /Overflow true put } if
+  Drawing {
+    ps-ink NameFont 11.5 ps-font
+    /next item /NameLines get x y 14 ps-lines def
+    x Layout /ColumnWidth get add item /Price get stringwidth pop sub y moveto item /Price get show
+    /y next def
+    BodyFont 10 ps-font
+    item /DescLines get length 0 gt {
+      /y item /DescLines get x y 3 sub 12.5 ps-lines def
+    } if
+    /Helvetica-Oblique 8 ps-font
+    item /DietLines get length 0 gt {
+      /y item /DietLines get x y 3 sub 10 ps-lines def
+    } if
+    /Helvetica 8.5 ps-font
+    item /VarLines get length 0 gt {
+      /y item /VarLines get x y 3 sub 11 ps-lines def
+    } if
+    (PSITEM ) print Cursor /Page get 12 string cvs print ( ) print
+    Cursor /Column get 12 string cvs print ( ) print
+    top 24 string cvs print ( ) print bottom =
+  } if
   Cursor /Y bottom put
   Cursor /Items Cursor /Items get 1 add put
-  (PSITEM ) print Cursor /Page get 12 string cvs print ( ) print
-  Cursor /Column get 12 string cvs print ( ) print
-  top 24 string cvs print ( ) print bottom =
+  context /Piece context /Piece get 1 add put
+  % Content height independent of breaks: items plus each category's own heading.
+  Cursor /Used Cursor /Used get item /Height get add context /Index get 0 eq { headingHeight add } if put
   end
 } bind def
-/ps-render-category { % category --
+/ps-measure-category { % category -- measured category
   12 dict begin /category exch def
-  /context << /Heading category /Name get ps-heading-lines /First true >> def
   /items category /Items get Layout /ps-measure-item load fp-curry fp-map def
+  << /Heading category /Name get ps-heading-lines /Items items >>
+  end
+} bind def
+/ps-render-category { % measured-category --
+  12 dict begin /category exch def
+  /items category /Items get def
+  /context << /Heading category /Heading get /First true /Index -1 /Items items /Piece 0 /Split false >> def
   items context /ps-render-item load fp-curry fp-each
+  context /Split get context /Piece get 1 eq and { Cursor /Lone Cursor /Lone get 1 add put } if
   Cursor /Y Cursor /Y get 12 sub put end
+} bind def
+/ps-flow { % floor drawing -- fits-one-page; Floor is the lowest point a column may reach
+  /Drawing exch def /Floor exch def
+  /Cursor << /Page 1 /Column 0 /Y 0 /Items 0 /Overflow false /Lone 0 /Used 0 >> def
+  Drawing { ps-start-page } { Cursor /Y ps-column-top put } ifelse
+  Measured /ps-render-category load fp-each
+  Cursor /Page get 1 eq Cursor /Overflow get not and
+} bind def
+% A multi-column menu that fits on one page is balanced: the highest column
+% floor that still fits every item on that page, in order, without leaving more
+% single-item category pieces than the unbalanced flow. Feasibility is not
+% monotone in the floor, so scan down point by point (dry passes only add),
+% starting at the highest floor that could hold the content in the columns.
+/ps-balanced-floor { % -- floor
+  55
+  Config /Columns get 1 gt {
+    55 false ps-flow {
+      /lone Cursor /Lone get def
+      ps-column-top Cursor /Used get Config /Columns get div sub floor cvi -1 56 {
+        dup false ps-flow Cursor /Lone get lone le and { exch pop exit } { pop } ifelse
+      } for
+    } if
+  } if
 } bind def
 /ps-layout-menu {
   /Layout << /ColumnWidth Config /W get 84 sub Config /Columns get 1 sub 30 mul sub Config /Columns get div >> def
-  /Cursor << /Page 1 /Column 0 /Y 0 /Items 0 >> def
-  ps-start-page
-  Menu /ps-render-category load fp-each
+  /Measured Menu /ps-measure-category load fp-map def
+  ps-balanced-floor true ps-flow pop
   showpage
   (PSDONE ) print Cursor /Page get 12 string cvs print ( ) print Cursor /Items get =
   count 0 ne { printshop-operand-stack-leak } if

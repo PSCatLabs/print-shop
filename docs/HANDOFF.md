@@ -23,7 +23,8 @@ host's Homebrew Node was broken.
 - PS-009 (#9) is done: `npm run test:browser` drives headless Chrome over the
   DevTools protocol and passes offline and served editions at desktop and
   390 px mobile. Run it after any UI or rendering change.
-- Next: PS-010 (#10) column balancing, PS-008 (#8) preflight acceptance, then
+- PS-010 (#10) is done: see `docs/VERIFICATION.md` for the layout tradeoff.
+- Next: PS-008 (#8) preflight acceptance, then
   #16 (repin to a released pscat once PSCatLabs/pscat#1003 lands its WASM
   SVG/PDF output and the functional library is on pscat main) and #13 (QR).
 - Deferred: #12, #14, #15, #17.
@@ -51,7 +52,9 @@ the UI clears an earlier error immediately and keeps stale exports disabled.
 
 ## Known limits
 
-- Greedy columns, without balancing or widow/orphan optimization (PS-010).
+- Column flow keeps a category's last two items together and balances
+  one-page multi-column menus (PS-010). The last page of a multi-page menu is
+  not balanced, and there is no general widow/orphan optimization.
 - CSV only; no XLSX, general Unicode or euro encoding (PS-012). Smart quotes,
   dashes and ellipses are normalized; accented Latin-1 is supported.
 - RGB PDF 1.4 with outlined type. No ICC intent, PDF/X validation, trim/bleed
