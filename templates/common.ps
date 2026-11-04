@@ -181,14 +181,16 @@
 % A multi-column menu that fits on one page is balanced: the highest column
 % floor that still fits every item on that page, in order, without leaving more
 % single-item category pieces than the unbalanced flow. Feasibility is not
-% monotone in the floor, so scan down point by point (dry passes only add),
+% monotone in the floor, so scan every candidate (dry passes only add),
 % starting at the highest floor that could hold the content in the columns.
+% Every measured height and position is a multiple of 0.5 pt, and a break only
+% changes where a bottom crosses the floor, so half-point steps miss nothing.
 /ps-balanced-floor { % -- floor
   55
   Config /Columns get 1 gt {
     55 false ps-flow {
       /lone Cursor /Lone get def
-      ps-column-top Cursor /Used get Config /Columns get div sub floor cvi -1 56 {
+      ps-column-top Cursor /Used get Config /Columns get div sub 2 mul floor 2 div -0.5 55.5 {
         dup false ps-flow Cursor /Lone get lone le and { exch pop exit } { pop } ifelse
       } for
     } if

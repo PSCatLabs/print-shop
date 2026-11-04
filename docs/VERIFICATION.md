@@ -14,10 +14,14 @@ see identical positions.
   highest column floor at which it still fits on that page, in order, without
   more single-item category pieces than the unbalanced flow. Feasibility is
   not monotone in the floor (binary search missed `[2 | 4]` → one category
-  per column), so the floor is scanned point by point. The scan starts at the
-  floor that would just hold the content, which keeps the sample's render at
-  79 ms versus 74 ms before. Starting the scan there gave byte-identical
-  output to scanning from the top in all 14 comparison cases.
+  per column), so every candidate floor is scanned. All measured heights and
+  positions are multiples of 0.5 pt, so half-point steps miss no feasible
+  interval; a whole-point scan did (found by Codex review: a menu with 12.5 pt
+  description lines got column bottoms 65.5 / 303 pt instead of 256 / 157.5;
+  now a test). The scan starts at the floor that would just hold the content,
+  which keeps the sample's render at about 80 ms versus 74 ms before. Starting
+  there gave byte-identical output to scanning from the top in all 14
+  comparison cases.
 
 | Case | Before | After |
 | --- | --- | --- |
@@ -45,7 +49,7 @@ New tests (`tests/render.test.mjs`) read the PSITEM placements and fail on
 the old layout: no category ends with a lone continuation (all three
 templates, 40 and 500 items), and short-menu balance (sample columns end
 within 60 pt, 3 items stay together, 2 + 4 take a column each, one column is
-never balanced). `npm test`: 20 tests pass.
+never balanced, and the half-point case above). `npm test`: 20 tests pass.
 
 ## Headless and served-edition browser acceptance (PS-009) — 2026-11-04
 

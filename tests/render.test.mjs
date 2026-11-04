@@ -65,6 +65,11 @@ test('short two-column menus are balanced without splitting categories needlessl
   assert.deepEqual(three[0].map(p=>[p.column,p.count]),[[0,3]],'a three-item category is not split 1 + 2');
   const six=pieces((await render(shortMenu([2,4]))).output,[2,4]);
   assert.deepEqual(six.map(runs=>runs.map(p=>[p.column,p.count])),[[[0,2]],[[1,4]]],'two short categories take a column each');
+  // Feasible floors can be half-point intervals (12.5 pt description leading).
+  const lines=[[0,7,1,1,1],[0],[2,5,6,5,2,1]];
+  const uneven={kind:'menu',categories:lines.map((counts,c)=>({name:`Part ${c+1}`,items:counts.map((n,i)=>({name:`Dish ${i+1}`,description:Array(n).fill('a').join('\n'),price:'9',dietary:'',variations:''}))}))};
+  const placed=pieces((await render(uneven)).output,lines.map(l=>l.length)).flat();
+  assert.ok(Math.min(...placed.map(p=>p.bottom))>=157.5,'balance search found the half-point floor');
   const one=pieces((await render(shortMenu([2,4]),{columns:1})).output,[2,4]);
   assert.ok(one.flat().every(p=>p.column===0),'one column is never balanced');
 });
