@@ -29,7 +29,7 @@ const configs=[
   {name:'served-mobile',edition:'served',viewport:mobile},
 ];
 const only=process.argv.includes('--only')?process.argv[process.argv.indexOf('--only')+1]:null;
-const SUITE_TIMEOUT=180000,RENDER_TIMEOUT=60000;
+const SUITE_TIMEOUT=180000,RENDER_TIMEOUT=60000,COMMAND_TIMEOUT=30000;
 
 class Browser {
   constructor(args){
@@ -45,13 +45,22 @@ class Browser {
         else for(const listener of this.listeners)listener(message);
       }
     });
-    this.exited=new Promise(resolve=>this.child.on('close',resolve));
-    this.child.on('error',error=>{for(const {reject} of this.pending.values())reject(error);});
+    // A crashed or missing browser must fail the run, never leave it waiting.
+    this.dead=null;
+    const fail=error=>{this.dead??=error;for(const {reject} of this.pending.values())reject(this.dead);this.pending.clear();};
+    this.exited=new Promise(resolve=>this.child.on('close',(code,signal)=>{fail(Error(`Chrome exited (code ${code}, signal ${signal||'none'})`));resolve();}));
+    this.child.on('error',fail);
+    this.child.stdio[3].on('error',fail);
   }
   send(method,params={},sessionId){
+    if(this.dead)return Promise.reject(this.dead);
     const id=++this.id;const message={id,method,params};if(sessionId)message.sessionId=sessionId;
-    this.child.stdio[3].write(JSON.stringify(message)+'\0');
-    return new Promise((resolve,reject)=>this.pending.set(id,{resolve,reject}));
+    return new Promise((resolve,reject)=>{
+      const timer=setTimeout(()=>{this.pending.delete(id);reject(Error(`${method} timed out after ${COMMAND_TIMEOUT} ms`));},COMMAND_TIMEOUT);
+      const settle=fn=>value=>{clearTimeout(timer);fn(value);};
+      this.pending.set(id,{resolve:settle(resolve),reject:settle(reject)});
+      this.child.stdio[3].write(JSON.stringify(message)+'\0');
+    });
   }
   close(){this.child.kill('SIGKILL');return this.exited;}
 }
@@ -65,6 +74,7 @@ async function evaluate(browser,session,expression){
 async function waitFor(browser,session,expression,timeout,label){
   const start=Date.now();
   while(Date.now()-start<timeout){
+    if(browser.dead)throw browser.dead;
     try{const value=await evaluate(browser,session,expression);if(value)return value;}catch{}
     await sleep(250);
   }

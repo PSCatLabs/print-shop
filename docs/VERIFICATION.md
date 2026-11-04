@@ -17,7 +17,9 @@ dependencies). For each configuration it:
 2. reloads with `?browser-test` and waits for the nine-check in-page suite;
 3. fails on any page or worker exception, `console.error` or browser error
    log entry (worker targets are auto-attached);
-4. for the file edition, fails on any request that is not `file:`, `blob:`
+4. fails, rather than waits, when Chrome is missing or exits, and times out
+   any DevTools command after 30 s;
+5. for the file edition, fails on any request that is not `file:`, `blob:`
    or `data:`, and runs Chrome behind a dead proxy (`127.0.0.1:9`) so an HTTP
    request could not succeed anyway.
 
