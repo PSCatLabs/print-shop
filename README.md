@@ -89,3 +89,12 @@ definitions (PS-001 to PS-015) and maps each to its GitHub issue. Re-running
 
 Printshop application code is MIT licensed. Distributed PSCat, fonts and Rust
 dependencies retain the additional notices in [public/licenses](public/licenses/README.md).
+
+<!-- sdlcify:managed:start -->
+## SDLC
+
+See [`SDLC.md`](SDLC.md) for how this repo's development lifecycle
+works (issue → branch → PR → review → merge → cleanup) and the
+branch-protection/merge policy currently enforced on GitHub — generated
+and kept in sync by the `sdlcify` skill.
+<!-- sdlcify:managed:end -->
