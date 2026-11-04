@@ -49,6 +49,15 @@ Before and after (Classic Bistro sample, then the 2 + 4 menu):
 [after](verification/ps-010/short-6-after.png). All three templates, A4,
 compact and short fixtures were rasterized with `pdftoppm` and viewed.
 
+Measuring the whole menu before the flow must not change which named error a
+bad menu gets (Codex review found two cases). Page 1's masthead is drawn first,
+so title and subtitle errors still come first. Each category's items are
+checked against a fresh column as soon as it is measured
+(`printshop-item-too-tall`). Measured content beyond 40 pages of column space
+raises `printshop-too-many-pages` at once, since content height is a lower
+bound on what the flow needs. Each case is a test that fails on the earlier
+commit with the generic render-budget error.
+
 New tests (`tests/render.test.mjs`) read the PSITEM placements and fail on
 the old layout: no category ends with a lone continuation (all three
 templates, 40 and 500 items), and short-menu balance (sample columns end

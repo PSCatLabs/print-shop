@@ -175,6 +175,10 @@
   % categories, so the named error wins over the render budget.
   /headingHeight measured ps-heading-height def
   items { /Height get headingHeight add ps-column-top 55 sub gt { printshop-item-too-tall } if } fp-each
+  % Content height is a lower bound on the flow's column space, so once it
+  % exceeds 40 pages the flow must too: refuse before measuring the rest.
+  /MeasuredHeight MeasuredHeight headingHeight add items { /Height get add } fp-each store
+  MeasuredHeight ps-column-top 55 sub Config /Columns get mul 40 mul gt { printshop-too-many-pages } if
   measured end
 } bind def
 /ps-render-category { % measured-category --
@@ -191,7 +195,7 @@
   /Drawing exch def /Floor exch def
   /Cursor << /Page 1 /Column 0 /Y 0 /Items 0 /Overflow false /Used 0 /Category 0
     /Lone [ Measured length { 0 } repeat ] >> def
-  Drawing { ps-start-page } { Cursor /Y ps-column-top put } ifelse
+  Cursor /Y ps-column-top put % the drawn page 1 header comes first, in ps-layout-menu
   Measured /ps-render-category load fp-each
   Cursor /Page get 1 eq Cursor /Overflow get not and
 } bind def
@@ -215,6 +219,11 @@
 } bind def
 /ps-layout-menu {
   /Layout << /ColumnWidth Config /W get 84 sub Config /Columns get 1 sub 30 mul sub Config /Columns get div >> def
+  % Draw page 1's masthead before measuring, so title and subtitle errors come
+  % first, as they did when measuring and drawing were interleaved.
+  /Cursor << /Page 1 /Y 0 >> def
+  ps-start-page
+  /MeasuredHeight 0 def
   /Measured Menu /ps-measure-category load fp-map def
   ps-balanced-floor true ps-flow pop
   showpage
