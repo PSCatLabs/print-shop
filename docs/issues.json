@@ -147,7 +147,7 @@
     "id": "PS-009",
     "phase": 6,
     "title": "Complete desktop/mobile browser and offline edition acceptance",
-    "status": "Partially verified — offline desktop/mobile suite passes; served edition and headless CLI remain blocked by host permissions",
+    "status": "Verified 2026-11-04: headless Chrome 156 passes offline and served editions at desktop and 390 px mobile",
     "dependsOn": [
       "PS-003",
       "PS-005",
@@ -163,7 +163,7 @@
       "Verify SVG/PDF/PNG downloads and offline file opening without HTTP requests; test the ordinary served edition too.",
       "Record browser/version, report and inspected screenshots; do not close based only on Node tests."
     ],
-    "evidence": "docs/verification/offline-desktop.json; docs/verification/offline-mobile.json; docs/VERIFICATION.md",
+    "evidence": "scripts/browser-check.mjs; docs/verification/headless-*.json; docs/verification/offline-*.json; docs/VERIFICATION.md",
     "url": "https://github.com/PSCatLabs/print-shop/issues/9"
   },
   {

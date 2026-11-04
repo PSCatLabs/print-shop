@@ -13,27 +13,20 @@ that directory. To rebuild, clone the exact recorded feature commit into a
 dedicated directory and use `scripts/build-engine.py`. No modifications were
 made to the separate ongoing QR project.
 
-## Next task: remaining PS-009 checks and GitHub publication
+## State and next tasks
 
-The offline workflow now passes nine checks at desktop and 390 px mobile
-viewports in Chrome 156. Reports are tracked under `docs/verification/`.
-The remaining acceptance needs a machine that can bind localhost and run the
-headless CLI harness.
+The repository follows `SDLC.md`: issue → feature branch → PR → CI → an
+independent Codex review → merge; nothing goes straight to `main`. Use Node
+24.14.0 from nvm (`source ~/.nvm/nvm.sh && nvm use 24.14.0`); the original
+host's Homebrew Node was broken.
 
-1. Done 2026-11-04: published to `PSCatLabs/print-shop`, issues created with
-   `npm run issues:publish`.
-2. Read architecture, investigation and print-production notes. Run `npm test`
-   and `npm run build` using a working Node 22+ installation. The initial host's
-   Homebrew Node had a missing dylib; the working Node was the installed nvm
-   24.14.0 binary.
-3. Run `npm run test:browser` (`CHROME_BIN` can select Chrome). The headless
-   process still aborts under the initial sandbox, although native Chrome now
-   works and the suite passes there. Record the CLI result on a supported host.
-4. Run `npm run dev` and inspect the served edition. Offline upload, repeated
-   edits, stale-export disabling, every template, multipage navigation,
-   card front/back and actual SVG/PDF/PNG bytes are already browser-verified.
-5. Update the verification record with evidence. Close acceptance issues only
-   when their browser criteria pass; Node tests alone do not establish the UI.
+- PS-009 (#9) is done: `npm run test:browser` drives headless Chrome over the
+  DevTools protocol and passes offline and served editions at desktop and
+  390 px mobile. Run it after any UI or rendering change.
+- Next: PS-010 (#10) column balancing, PS-008 (#8) preflight acceptance, then
+  #16 (repin to a released pscat once PSCatLabs/pscat#1003 lands its WASM
+  SVG/PDF output and the functional library is on pscat main) and #13 (QR).
+- Deferred: #12, #14, #15, #17.
 
 ## What works under automated verification
 
@@ -42,8 +35,9 @@ real WASM execution → outlined vector SVG/native PDF. Three menu styles,
 parameter changes, 1/40/500-item menus and two-sided QR-free cards are covered.
 The app includes UI upload/edit, customization, paging, exports and preflight.
 The offline package resolves all real JS modules, restores the exact engine,
-and executes its actual packaged classic worker under Node. Browser workflow
-reports pass at 1843 × 834 desktop and 390 × 747 mobile. A PDF saved through
+and executes its actual packaged classic worker under Node. Headless browser
+reports pass for the offline and served editions at 1440 × 900 desktop and
+390 × 844 mobile (earlier native-Chrome offline runs: 1843 × 834 and 390 × 747). A PDF saved through
 Chrome's native Save dialog matches the Node-generated sample byte for byte.
 
 ## Browser fixes from the continuation
