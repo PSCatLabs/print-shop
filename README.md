@@ -39,7 +39,8 @@ can start from a file origin. The served edition uses ordinary module workers.
   spacing and optional ornaments. Standard-font Latin-1 support, with explicit
   errors for unsupported scripts/currency symbols.
 - Actual SVG page previews; native multipage PDF; selected-page SVG/PNG export.
-- A QR-free front/back business card at 3.5 × 2 in trim plus 1/8 in bleed.
+- A front/back business card at 3.5 × 2 in trim plus 1/8 in bleed, with an
+  optional QR code on the back drawn by pscat's own `lib/qr.ps`.
 - Print preflight that distinguishes vector proofs from production certification.
 
 The engine is unmodified PSCat **`main` at `db44e12`** (crate 0.7.0-rc.3),
@@ -54,6 +55,7 @@ so an older release or the current npm package must not be substituted. Source/p
 npm test                    # parser/schema, real WASM, layout, exports, packaging
 npm run build               # verifies WASM provenance and emits static/offline builds
 npm run test:browser        # headless Chrome, offline + served, desktop + mobile; set CHROME_BIN if needed
+npm run test:qr             # decode card QR codes from SVG, PDF (Poppler) and PNG with Chrome's BarcodeDetector
 python3 scripts/build-engine.py
 # Or reuse a dedicated checkout at the exact pin:
 python3 scripts/build-engine.py --source /path/to/pscat --offline
@@ -70,8 +72,7 @@ The rendering API, generated documents and offline browser workflow are
 verified in both the offline and served editions. Production PDF metadata
 remains unfinished. PDFs use RGB
 and outlined type, with no ICC output intent, PDF/X certification, TrimBox,
-BleedBox or crop marks. Menus have no additional bleed. QR awaits
-integration of pscat's `lib/qr.ps` (#13); XLSX, arbitrary template import, fulfillment and MCP are
+BleedBox or crop marks. Menus have no additional bleed. XLSX, arbitrary template import, fulfillment and MCP are
 future work. See [print limitations](docs/PRINT-PRODUCTION.md).
 
 - [Architecture and decisions](docs/ARCHITECTURE.md)

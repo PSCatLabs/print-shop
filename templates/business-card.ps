@@ -1,10 +1,30 @@
 % Two sides; 252 x 144 pt trim centered in 270 x 162 pt bleed media.
-% No QR implementation here. Future adapter invokes the upstream PS library.
+% An optional QR code on the back comes from pscat's own lib/qr.ps.
 /TitleFont /Times-Roman def
+Card /qr get length 0 gt { (lib/qr.ps) run } if
+/TextWidth 222 def
 /ps-card-lines { % text y size -- next-y
   12 dict begin /size exch def /y exch def /text exch def
   /Helvetica size ps-font
-  text 222 ps-checked-wrap 24 y size 1.35 mul ps-lines end
+  text TextWidth ps-checked-wrap 24 y size 1.35 mul ps-lines end
+} bind def
+% Draw the back's QR code in the lower right of the safe area, at most 72 pt
+% (1 in) square, quiet zone included, and narrow the text column beside it.
+% Each module is a whole number of 300 dpi pixels and the origin sits on that
+% grid, so the 300 dpi PNG export has crisp module edges.
+/ps-card-qr { % --
+  12 dict begin
+  /sym Card /qr get << /Level /Q >> qrencode def
+  /n sym /Size get 8 add def                     % 4-module quiet zone each side
+  /px 72 300 mul 72 div n div floor cvi def      % pixels per module at 300 dpi
+  px 4 lt { printshop-qr-too-dense } if          % 4 px = 0.96 pt, above the ~0.85 pt guidance
+  /m px 72 mul 300 div def
+  /x 246 px n mul 72 mul 300 div sub 300 mul 72 div floor 72 mul 300 div def
+  x 24 moveto sym << /ModuleSize m /Dark Config /Ink get /Light Config /Paper get >> qrdraw
+  (PSQR ) print sym /Version get 12 string cvs print ( ) print sym /Level get 12 string cvs print ( ) print
+  m 20 string cvs print ( ) print n =
+  /TextWidth x 24 sub 8 sub store
+  end
 } bind def
 /ps-layout-card {
   ps-paper 0 0 270 162 rectfill ps-ink
@@ -15,6 +35,7 @@
   /Helvetica-Bold 13 ps-font
   Card /name get stringwidth pop 222 gt { printshop-card-name-too-wide } if
   24 127 moveto Card /name get show
+  Card /qr get length 0 gt { ps-card-qr ps-ink } if
   /y Card /role get 109 9 ps-card-lines 8 sub def
   [ Card /email get Card /phone get Card /website get Card /address get ] {
     dup length 0 gt { y 8.5 ps-card-lines /y exch def } { pop } ifelse

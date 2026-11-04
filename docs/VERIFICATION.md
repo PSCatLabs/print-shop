@@ -1,5 +1,39 @@
 # Verification record — 2026-10-28
 
+## Card QR codes from pscat's lib/qr.ps (PS-013) — 2026-11-04
+
+- **Upstream contract** (PSCatLabs/pscat `main` `db44e12`, the engine pin;
+  `docs/guides/qr-codes.md` there): `lib/qr.ps`, MIT OR Apache-2.0 like the
+  other pscat libraries, embedded in the WASM build. Entry points
+  `payload opts qrencode -> symbol` and `symbol opts qrdraw -`; byte mode,
+  raw bytes with no ECI; levels L, M, Q and H; a quiet zone of at least 4
+  modules. Printshop uses level Q, quiet zone 4, `/ModuleSize`, and the card's
+  ink and paper colors.
+- **Validation:** printable ASCII only (the library writes raw bytes, and
+  non-ASCII would need UTF-8 plus ECI), at most 200 bytes. 200 bytes give
+  version 12 at 0.96 pt modules within 72 pt, at about 6.9 M of the 12 M
+  render-step budget (266 ms). Beyond the validated length, a 4-pixel
+  minimum module raises `printshop-qr-too-dense` (tested at 230 bytes).
+- **Geometry:** each module is a whole number of 300 dpi pixels with the
+  origin on that grid. A test checks this for five payloads, and also that
+  the symbol stays within 1 in.
+- **Independent decoding** (`npm run test:qr`): five payloads (19 to 200
+  bytes, versions 2 to 12, four palettes). Each is decoded from three
+  sources: the SVG back page rasterized by Chrome at 300 dpi; page 2 of the
+  PDF rasterized at 300 dpi by Poppler `pdftoppm`; and a PNG made through the
+  app's export path. The decoder is Chrome 156's `BarcodeDetector` (Shape
+  Detection API, Apple Vision on macOS), which shares no code with
+  `lib/qr.ps`. All 15 decodes return the exact payload, and the card front,
+  used as a control, decodes to nothing. The browser suite gained a tenth
+  check: it types a link into the real UI, downloads the PNG and decodes it.
+  This passed offline and served, desktop and mobile.
+- The card back was rasterized and viewed: the symbol sits lower right in
+  the safe area, with the contact column beside it. The front is
+  byte-identical with and without a QR code; QR-free cards and all menus are
+  byte-identical to the previous commit. Images:
+  [46-byte link](verification/ps-013/card-back-qr.png),
+  [200 bytes](verification/ps-013/card-back-qr-200.png).
+
 ## Engine repin to pscat main (#16) — 2026-11-04
 
 - **Source:** a fresh clone of `PSCatLabs/pscat` (never the owner's checkout)

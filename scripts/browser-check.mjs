@@ -12,12 +12,12 @@
 //   npm run test:browser -- --only offline-mobile    # one configuration
 //   CHROME_BIN=/path/to/chrome npm run test:browser
 import {spawn} from 'node:child_process';
+import {Browser,chrome} from './cdp.mjs';
 import {mkdtemp,mkdir,writeFile,rm} from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 
-const chrome=process.env.CHROME_BIN||(process.platform==='darwin'?'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome':'chromium');
 const desktop={width:1440,height:900,deviceScaleFactor:1,mobile:false};
 const mobile={width:390,height:844,deviceScaleFactor:3,mobile:true,
   userAgent:'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Mobile Safari/537.36'};
@@ -29,41 +29,7 @@ const configs=[
   {name:'served-mobile',edition:'served',viewport:mobile},
 ];
 const only=process.argv.includes('--only')?process.argv[process.argv.indexOf('--only')+1]:null;
-const SUITE_TIMEOUT=180000,RENDER_TIMEOUT=60000,COMMAND_TIMEOUT=30000;
-
-class Browser {
-  constructor(args){
-    this.child=spawn(chrome,args,{stdio:['ignore','ignore','pipe','pipe','pipe']});
-    this.stderr='';this.child.stderr.on('data',c=>this.stderr+=c);
-    this.id=0;this.pending=new Map();this.listeners=new Set();let buffer=Buffer.alloc(0);
-    this.child.stdio[4].on('data',chunk=>{
-      buffer=Buffer.concat([buffer,chunk]);let end;
-      while((end=buffer.indexOf(0))>=0){
-        const message=JSON.parse(buffer.subarray(0,end).toString('utf8'));buffer=buffer.subarray(end+1);
-        if(message.id&&this.pending.has(message.id)){const {resolve,reject}=this.pending.get(message.id);this.pending.delete(message.id);
-          message.error?reject(Error(message.error.message)):resolve(message.result);}
-        else for(const listener of this.listeners)listener(message);
-      }
-    });
-    // A crashed or missing browser must fail the run, never leave it waiting.
-    this.dead=null;
-    const fail=error=>{this.dead??=error;for(const {reject} of this.pending.values())reject(this.dead);this.pending.clear();};
-    this.exited=new Promise(resolve=>this.child.on('close',(code,signal)=>{fail(Error(`Chrome exited (code ${code}, signal ${signal||'none'})`));resolve();}));
-    this.child.on('error',fail);
-    this.child.stdio[3].on('error',fail);
-  }
-  send(method,params={},sessionId){
-    if(this.dead)return Promise.reject(this.dead);
-    const id=++this.id;const message={id,method,params};if(sessionId)message.sessionId=sessionId;
-    return new Promise((resolve,reject)=>{
-      const timer=setTimeout(()=>{this.pending.delete(id);reject(Error(`${method} timed out after ${COMMAND_TIMEOUT} ms`));},COMMAND_TIMEOUT);
-      const settle=fn=>value=>{clearTimeout(timer);fn(value);};
-      this.pending.set(id,{resolve:settle(resolve),reject:settle(reject)});
-      this.child.stdio[3].write(JSON.stringify(message)+'\0');
-    });
-  }
-  close(){this.child.kill('SIGKILL');return this.exited;}
-}
+const SUITE_TIMEOUT=180000,RENDER_TIMEOUT=60000;
 
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function evaluate(browser,session,expression){
@@ -92,7 +58,7 @@ async function runConfig(config,version){
   const profile=await mkdtemp(path.join(os.tmpdir(),'printshop-browser-'));
   let server,base=offlineUrl;
   if(config.edition==='served')({server,base}=await startServer());
-  const args=['--headless','--remote-debugging-pipe','--no-first-run','--no-default-browser-check',`--user-data-dir=${profile}`,
+  const args=['--headless','--no-first-run','--no-default-browser-check',`--user-data-dir=${profile}`,
     '--disable-background-networking','--disable-extensions','--disable-component-update','about:blank'];
   if(config.edition==='offline')args.splice(1,0,'--proxy-server=http://127.0.0.1:9','--proxy-bypass-list=<-loopback>');
   const browser=new Browser(args);

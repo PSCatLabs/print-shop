@@ -77,11 +77,15 @@ Future MCP operations call these APIs; no separate rendering implementation.
    It requires workers, Blob URLs, WASM and native gzip `DecompressionStream`.
    Both editions pass the headless browser suite in Chrome 156 at desktop and
    390 px mobile viewports (`npm run test:browser`).
-8. **QR stays upstream.** Cards are QR-free. A future QR adapter accepts
-   `{payload, sizePt, quietZoneModules, errorCorrection}` and loads a versioned
-   PSCat library, invoking its documented PS entry point inside a bounded card
-   rectangle. Until upstream API/version are published, there is no assumed
-   operator name and no local encoder or JS/Rust QR dependency.
+8. **QR stays upstream.** A card's optional `qr` payload (printable ASCII, at
+   most 200 bytes) is escaped like all content. The card template loads
+   pscat's embedded `lib/qr.ps` only when a payload is present, encodes it
+   with `qrencode` at level Q, and draws it with `qrdraw` in the card's ink on
+   its paper, lower right inside the safe area, at most 72 pt square with the
+   standard 4-module quiet zone. Each module is a whole number of 300 dpi
+   pixels (at least 4, i.e. 0.96 pt) with the origin on that grid, so the PNG
+   export has crisp edges. The text column narrows beside it. Printshop has
+   no encoder and no JS/Rust QR dependency; `lib/qr.ps` errors surface by name.
 
 ## Template publication boundary
 

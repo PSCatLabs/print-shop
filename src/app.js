@@ -19,7 +19,7 @@ function parameters(){
     palette:$('palette').value,typography:$('typography').value,pageSize:$('page-size').value,
     columns:Number($('columns').value),density:$('density').value,ornaments:$('ornaments').checked};
 }
-function card(){return {kind:'business-card',...Object.fromEntries(['name','role','email','phone','website','address'].map(key=>[key,normalizeText($('card-'+key).value)]))};}
+function card(){return {kind:'business-card',...Object.fromEntries(['name','role','email','phone','website','address','qr'].map(key=>[key,normalizeText($('card-'+key).value)]))};}
 function displayPage(){
   if (!result) return;
   if(previewURL)URL.revokeObjectURL(previewURL);
@@ -71,6 +71,7 @@ function friendlyError(message){
     'printshop-subtitle-too-long':'The subtitle needs more than two lines. Shorten it.',
     'printshop-card-overflow':'The contact details exceed the safe area. Shorten them.',
     'printshop-card-name-too-wide':'The name exceeds the card’s safe area. Shorten it.',
+    'printshop-qr-too-dense':'The QR link is too long to print at a scannable size on the card. Use a shorter link.',
     'printshop-too-many-pages':'The document exceeds 40 pages. Reduce the number of items.',
     'printshop-font-substituted':'A template font is not available in this engine, so it would be substituted. Report this template.',
   };

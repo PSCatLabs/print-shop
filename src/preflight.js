@@ -33,6 +33,9 @@ export function preflightPrint(document, parameters, result) {
   }
   if (document.kind === 'business-card' && result) {
     if (!/PSCARD 2\n/.test(result.output) || result.svgs?.length!==2) error('content-count','The card did not render exactly one front and one back.');
+    const qr=/PSQR (\d+) \/?([LMQH]) ([\d.]+) (\d+)\n/.exec(result.output);
+    if (document.qr && !qr) error('qr-missing','The QR code requested for the card was not drawn.');
+    if (qr) findings.push({severity:'info',code:'qr-code',message:`QR code on the back: version ${qr[1]}, error correction ${qr[2]}, ${Number(qr[3]).toFixed(2)} pt modules, ${(Number(qr[3])*Number(qr[4])/72).toFixed(2)} in square with a 4-module quiet zone. Scan a printed proof before ordering.`});
   }
   findings.push({severity:'info',code:'outlined-type',message:'Text is vector outlines of the engine’s bundled faces, exactly as the template names them, with no fallback face (Times and Helvetica are the metric-compatible Liberation Serif and Sans). Fonts do not need embedding; text is not searchable.'});
   findings.push({severity:'warning',code:'rgb-output',message:'RGB PDF 1.4: no ICC output intent, CMYK separation or PDF/X certification. Confirm acceptance with your printer.'});
