@@ -42,6 +42,27 @@ foot of a column, which costs two pages over 500 items; a one-page menu is
 balanced but not justified vertically, so short menus end with white space
 below both columns. Long menus' last pages are not balanced.
 
+Near the 40-page cap this matters. A sweep of 500-item-class menus with 2–5
+item categories found menus that render at 39–40 pages on `main` and now raise
+`printshop-too-many-pages` (for example 2-item categories, 4-line descriptions,
+394–400 items, two columns). Letting the pair rule yield near the cap would
+need a full-menu dry pass, which is the eager measurement that changed named
+errors above, so the cap stays a hard guard and this is accepted: a 40-page
+menu is far outside the intended use. Away from the cap, page counts in the
+sweep matched or grew by at most two.
+
+Two more checks: the balance scan's cost peaked at 1.95 M interpreter steps
+for one-page two-column menus of 1–60 items (12 M budget), and at 825 k for
+lopsided menus with one very tall item. Pages 2–3 of the 40-item menu and page
+16 of the 500-item menu were rasterized and viewed: continuation headings,
+names, descriptions and prices are painted, and page 16 shows a final pair
+kept together under its repeated heading.
+
+One review finding was not changed: a 460-item single-category menu whose
+`main` render used the entire 12 M-step budget (12,025,000 steps) before its
+page-limit error now hits the budget slightly earlier. The budget is a resource
+guard, and any added per-item work moves inputs that sit exactly on it.
+
 Before and after (Classic Bistro sample, then the 2 + 4 menu):
 [before](verification/ps-010/sample-classic-before.png),
 [after](verification/ps-010/sample-classic-after.png),
