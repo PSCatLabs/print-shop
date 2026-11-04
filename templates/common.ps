@@ -102,7 +102,7 @@
     2 copy get exch Cursor /Lone get exch get 1 index or ne { exch pop false exch } if
   } for pop
 } bind def
-/ps-render-item { % measured-item category-context --
+/ps-place-item { % measured-item category-context --
   25 dict begin /context exch def /item exch def
   context /Index context /Index get 1 add put
   /headingHeight context ps-heading-height def
@@ -167,41 +167,49 @@
   Cursor /Used Cursor /Used get item /Height get add context /Index get 0 eq { headingHeight add } if put
   end
 } bind def
-/ps-measure-category { % category -- measured category
-  12 dict begin /category exch def
-  /items category /Items get Layout /ps-measure-item load fp-curry fp-map def
-  /measured << /Heading category /Name get ps-heading-lines /Items items >> def
-  % Refuse an item taller than a fresh column now, before measuring later
-  % categories, so the named error wins over the render budget.
-  /headingHeight measured ps-heading-height def
-  items { /Height get headingHeight add ps-column-top 55 sub gt { printshop-item-too-tall } if } fp-each
-  % Content height is a lower bound on the flow's column space, so once it
-  % exceeds 40 pages the flow must too: refuse before measuring the rest.
-  /MeasuredHeight MeasuredHeight headingHeight add items { /Height get add } fp-each store
-  MeasuredHeight ps-column-top 55 sub Config /Columns get mul 40 mul gt { printshop-too-many-pages } if
-  measured end
+% A dry pass only needs page 1: once it has moved past, it stops measuring and
+% placing, so long menus measure about one page ahead of the drawn pass.
+/ps-dry-done { Drawing not Cursor /Page get 1 gt and } bind def
+/ps-render-item { % measured-item category-context --
+  ps-dry-done { pop pop } { ps-place-item } ifelse
 } bind def
-/ps-render-category { % measured-category --
+/ps-measure-category { % category -- measured category; heading first, then items
   12 dict begin /category exch def
-  /items category /Items get def
-  /context << /Heading category /Heading get /First true /Index -1 /Items items /Piece 0 /Split false
-    /Category Cursor /Category get >> def
-  items context /ps-render-item load fp-curry fp-each
-  context /Split get context /Piece get 1 eq and { context 2 ps-mark-lone } if
+  /heading category /Name get ps-heading-lines def
+  /items category /Items get Layout /ps-measure-item load fp-curry fp-map def
+  << /Heading heading /Items items >>
+  end
+} bind def
+% Categories are measured when a pass first reaches them and then cached, so
+% measuring interleaves with layout in menu order, as named errors expect.
+/ps-render-category { % category --
+  12 dict begin /category exch def
+  ps-dry-done not {
+    /slot Cursor /Category get def
+    Measured slot get null eq { Measured slot category ps-measure-category put } if
+    /measured Measured slot get def
+    /items measured /Items get def
+    /context << /Heading measured /Heading get /First true /Index -1 /Items items /Piece 0 /Split false
+      /Category slot >> def
+    items context /ps-render-item load fp-curry fp-each
+    context /Split get context /Piece get 1 eq and { context 2 ps-mark-lone } if
+    Cursor /Y Cursor /Y get 12 sub put
+  } if
   Cursor /Category Cursor /Category get 1 add put
-  Cursor /Y Cursor /Y get 12 sub put end
+  end
 } bind def
 /ps-flow { % floor drawing -- fits-one-page; Floor is the lowest point a column may reach
   /Drawing exch def /Floor exch def
   /Cursor << /Page 1 /Column 0 /Y 0 /Items 0 /Overflow false /Used 0 /Category 0
-    /Lone [ Measured length { 0 } repeat ] >> def
+    /Lone [ Menu length { 0 } repeat ] >> def
   Cursor /Y ps-column-top put % the drawn page 1 header comes first, in ps-layout-menu
-  Measured /ps-render-category load fp-each
+  Menu /ps-render-category load fp-each
   Cursor /Page get 1 eq Cursor /Overflow get not and
 } bind def
 % A multi-column menu that fits on one page is balanced: the highest column
 % floor that still fits every item on that page, in order, without giving any
-% category a kind of single-item piece the unbalanced flow avoids. Feasibility is not
+% category a kind of single-item piece the unbalanced flow avoids. A menu that
+% fits has been fully measured by the first dry pass. Feasibility is not
 % monotone in the floor, so scan every candidate (dry passes only add),
 % starting at the highest floor that could hold the content in the columns.
 % Every measured height and position is a multiple of 0.5 pt, and a break only
@@ -219,12 +227,11 @@
 } bind def
 /ps-layout-menu {
   /Layout << /ColumnWidth Config /W get 84 sub Config /Columns get 1 sub 30 mul sub Config /Columns get div >> def
-  % Draw page 1's masthead before measuring, so title and subtitle errors come
-  % first, as they did when measuring and drawing were interleaved.
+  % Page 1's masthead comes before any measuring, so title and subtitle errors
+  % come first.
   /Cursor << /Page 1 /Y 0 >> def
   ps-start-page
-  /MeasuredHeight 0 def
-  /Measured Menu /ps-measure-category load fp-map def
+  /Measured [ Menu length { null } repeat ] def
   ps-balanced-floor true ps-flow pop
   showpage
   (PSDONE ) print Cursor /Page get 12 string cvs print ( ) print Cursor /Items get =

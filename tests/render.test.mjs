@@ -88,6 +88,11 @@ test('over-wide words, title and oversized blocks fail; interpreter recovers',as
   const tall=makeMenu(1,Array(55).fill('a').join('\n'));await assert.rejects(()=>render(tall),/printshop-item-too-tall/);
   const long=makeMenu(500,'a '.repeat(300).trim());await assert.rejects(()=>render(long),/printshop-too-many-pages/,'page limit before the render budget');
   await assert.rejects(()=>render(makeMenu(500,Array(120).fill('a').join('\n')),{businessName:'W'.repeat(80)}),/printshop-title-too-wide/,'title error before measuring');
+  const wideHeading=makeMenu(500,'a '.repeat(300).trim());wideHeading.categories[0].name='W'.repeat(60);
+  await assert.rejects(()=>render(wideHeading),/printshop-word-too-wide/,'heading checked before its items are measured');
+  const capped=makeMenu(90,Array(20).fill('a').join('\n'));
+  capped.categories.push({name:'Tail',items:makeMenu(410,'a '.repeat(300).trim()).categories.flatMap(c=>c.items).map(i=>({...i,dietary:'a '.repeat(40).trim(),variations:'a '.repeat(120).trim()}))});
+  await assert.rejects(()=>render(capped),/printshop-too-many-pages/,'page limit reached while measuring lazily');
   const tallLate=makeMenu(500,Array(120).fill('a').join('\n'));await assert.rejects(()=>render(tallLate),/printshop-item-too-tall/,'named error before the render budget');
   await assert.rejects(()=>render(menu,{businessName:'W'.repeat(80)}),/printshop-title-too-wide/);
   assert.equal((await render()).svgs.length,1);

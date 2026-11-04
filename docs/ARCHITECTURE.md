@@ -34,10 +34,10 @@ Future MCP operations call these APIs; no separate rendering implementation.
    descriptions, dietary labels and add-ons using the actual fonts. Blocks
    reserve a measured price area, stay together, flow columns then pages, and
    repeat their category heading at a break. A category heading stays with its
-   first item. A whole item that exceeds a fresh column is refused. Items are
-   measured once; the same flow procedure then runs as arithmetic-only dry
-   passes or as the drawn pass, so look-ahead never needs a second layout
-   engine. Two refinements (PS-010): a category's final item never continues
+   first item. A whole item that exceeds a fresh column is refused. Each
+   category is measured once, when the flow first reaches it, and cached; the
+   same flow procedure runs as arithmetic-only dry passes or as the drawn
+   pass, so look-ahead never needs a second layout engine. Two refinements (PS-010): a category's final item never continues
    alone under a repeated heading when the pair fits a fresh column; and a
    multi-column menu that fits on one page gets the highest column floor that
    keeps it on one page without giving any category a single-item piece, which
