@@ -226,7 +226,7 @@
     "id": "PS-013",
     "phase": 7,
     "title": "Integrate the upstream pure PostScript QR library when its API is ready",
-    "status": "Open — blocked by upstream QR library contract",
+    "status": "Open — upstream lib/qr.ps is on pscat main; blocked by the engine repin (#16)",
     "dependsOn": [
       "PS-007"
     ],

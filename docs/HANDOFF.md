@@ -29,14 +29,21 @@ host's Homebrew Node was broken.
   media size, counts and bounds; `ps-font` refuses a substituted face; a test
   ties every stated exporter limitation to the PDF bytes. See
   `docs/PRINT-PRODUCTION.md`.
-- Next: #16, repin to a released pscat. It is blocked upstream: the WASM
-  SVG/PDF output (PSCatLabs/pscat#1003) was still open on 2026-11-04. When it
-  merges, its final ABI is posted as a comment on #16. **Owner decision
-  (2026-11-04):** keep `lib/functional.ps` (`fp-map`/`fp-each`/`fp-curry`) in
-  the templates; pscat is merging its functional library (PSCatLabs/pscat#923)
-  into main, so the repin picks it up there. #16's acceptance line "No
-  template uses lib/functional.ps" is superseded. Repin only once both #1003
-  and #923 are on pscat main. Then #13 (QR via pscat's `lib/qr.ps`).
+- Next: #16, repin to pscat. The WASM SVG/PDF output landed on pscat `main`
+  on 2026-11-04 (PSCatLabs/pscat#1004, `c1a2852`, not yet in a release); its
+  final ABI and the mapping from `patches/` are in
+  [the comment on #16](https://github.com/PSCatLabs/print-shop/issues/16#issuecomment-6645065907).
+  **Owner decision (2026-11-04):** keep `lib/functional.ps`
+  (`fp-map`/`fp-each`/`fp-curry`) in the templates and pick it up from pscat
+  at the repin, so the repin waits only for the functional library to reach
+  pscat `main` (PSCatLabs/pscat#923). #16's acceptance line "No template uses
+  lib/functional.ps" is superseded. Then: build from a fresh clone of pscat
+  `origin/main` with `scripts/build-engine.py`, adapt `src/renderer.js`,
+  `src/render-worker.js` and the offline packaging to `begin(..., {svg, pdf})`
+  / `svgCount()` / `svg(i)` / `pdf()`, drop `patches/`, update
+  `public/engine/provenance.json`, and run every test and the browser checks.
+- Then #13 (QR): pscat's `lib/qr.ps` is on `main` (`docs/guides/qr-codes.md`
+  there); it is blocked only by the #16 repin.
 - Deferred: #12, #14, #15, #17.
 
 ## What works under automated verification
