@@ -12,7 +12,11 @@ see identical positions.
   column. Otherwise the greedy break stands.
 - **Balance.** A multi-column menu that fits on one page is set with the
   highest column floor at which it still fits on that page, in order, without
-  more single-item category pieces than the unbalanced flow. Feasibility is
+  giving any category a kind of single-item piece (an opening item before a
+  break, or a final item after one) that the unbalanced flow avoids. A
+  whole-menu count was not enough: Codex review found balancing could trade
+  one category's lone opening item for another's lone final item; that case
+  is now a test. Feasibility is
   not monotone in the floor (binary search missed `[2 | 4]` → one category
   per column), so every candidate floor is scanned. All measured heights and
   positions are multiples of 0.5 pt, so half-point steps miss no feasible
@@ -49,7 +53,7 @@ New tests (`tests/render.test.mjs`) read the PSITEM placements and fail on
 the old layout: no category ends with a lone continuation (all three
 templates, 40 and 500 items), and short-menu balance (sample columns end
 within 60 pt, 3 items stay together, 2 + 4 take a column each, one column is
-never balanced, and the half-point case above). `npm test`: 20 tests pass.
+never balanced, and both Codex counterexamples). `npm test`: 20 tests pass.
 
 ## Headless and served-edition browser acceptance (PS-009) — 2026-11-04
 

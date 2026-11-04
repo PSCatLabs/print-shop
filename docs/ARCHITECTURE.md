@@ -40,7 +40,7 @@ Future MCP operations call these APIs; no separate rendering implementation.
    engine. Two refinements (PS-010): a category's final item never continues
    alone under a repeated heading when the pair fits a fresh column; and a
    multi-column menu that fits on one page gets the highest column floor that
-   keeps it on one page without adding single-item category pieces, which
+   keeps it on one page without giving any category a single-item piece, which
    balances the columns. Type is never shrunk. There is no hyphenation,
    kerning-aware shaping, general widow/orphan optimization, last-page
    balancing of long menus, or complete publishing engine.

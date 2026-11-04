@@ -92,6 +92,16 @@
 } bind def
 % Place one measured item. Positions come only from measured heights, so a dry
 % pass (Drawing false) computes exactly the layout a drawn pass produces.
+% Per category: bit 1 = a single-item piece before a break, bit 2 = the
+% category's final piece is a single item.
+/ps-mark-lone { % context bit --
+  exch /Category get Cursor /Lone get exch 2 copy get 4 -1 roll or put
+} bind def
+/ps-no-new-lone { % baseline -- bool; no category gained a kind of lone piece
+  true exch 0 1 2 index length 1 sub {
+    2 copy get exch Cursor /Lone get exch get 1 index or ne { exch pop false exch } if
+  } for pop
+} bind def
 /ps-render-item { % measured-item category-context --
   25 dict begin /context exch def /item exch def
   context /Index context /Index get 1 add put
@@ -114,7 +124,7 @@
   break {
     % A break inside a category leaves a piece behind; count single-item pieces.
     context /First get not {
-      context /Piece get 1 eq { Cursor /Lone Cursor /Lone get 1 add put } if
+      context /Piece get 1 eq { context 1 ps-mark-lone } if
       context /Split true put
     } if
     ps-next-column context /First true put context /Piece 0 put
@@ -166,21 +176,24 @@
 /ps-render-category { % measured-category --
   12 dict begin /category exch def
   /items category /Items get def
-  /context << /Heading category /Heading get /First true /Index -1 /Items items /Piece 0 /Split false >> def
+  /context << /Heading category /Heading get /First true /Index -1 /Items items /Piece 0 /Split false
+    /Category Cursor /Category get >> def
   items context /ps-render-item load fp-curry fp-each
-  context /Split get context /Piece get 1 eq and { Cursor /Lone Cursor /Lone get 1 add put } if
+  context /Split get context /Piece get 1 eq and { context 2 ps-mark-lone } if
+  Cursor /Category Cursor /Category get 1 add put
   Cursor /Y Cursor /Y get 12 sub put end
 } bind def
 /ps-flow { % floor drawing -- fits-one-page; Floor is the lowest point a column may reach
   /Drawing exch def /Floor exch def
-  /Cursor << /Page 1 /Column 0 /Y 0 /Items 0 /Overflow false /Lone 0 /Used 0 >> def
+  /Cursor << /Page 1 /Column 0 /Y 0 /Items 0 /Overflow false /Used 0 /Category 0
+    /Lone [ Measured length { 0 } repeat ] >> def
   Drawing { ps-start-page } { Cursor /Y ps-column-top put } ifelse
   Measured /ps-render-category load fp-each
   Cursor /Page get 1 eq Cursor /Overflow get not and
 } bind def
 % A multi-column menu that fits on one page is balanced: the highest column
-% floor that still fits every item on that page, in order, without leaving more
-% single-item category pieces than the unbalanced flow. Feasibility is not
+% floor that still fits every item on that page, in order, without giving any
+% category a kind of single-item piece the unbalanced flow avoids. Feasibility is not
 % monotone in the floor, so scan every candidate (dry passes only add),
 % starting at the highest floor that could hold the content in the columns.
 % Every measured height and position is a multiple of 0.5 pt, and a break only
@@ -191,7 +204,7 @@
     55 false ps-flow {
       /lone Cursor /Lone get def
       ps-column-top Cursor /Used get Config /Columns get div sub 2 mul floor 2 div -0.5 55.5 {
-        dup false ps-flow Cursor /Lone get lone le and { exch pop exit } { pop } ifelse
+        dup false ps-flow lone ps-no-new-lone and { exch pop exit } { pop } ifelse
       } for
     } if
   } if

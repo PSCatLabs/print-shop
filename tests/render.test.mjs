@@ -70,6 +70,11 @@ test('short two-column menus are balanced without splitting categories needlessl
   const uneven={kind:'menu',categories:lines.map((counts,c)=>({name:`Part ${c+1}`,items:counts.map((n,i)=>({name:`Dish ${i+1}`,description:Array(n).fill('a').join('\n'),price:'9',dietary:'',variations:''}))}))};
   const placed=pieces((await render(uneven)).output,lines.map(l=>l.length)).flat();
   assert.ok(Math.min(...placed.map(p=>p.bottom))>=157.5,'balance search found the half-point floor');
+  // Balancing must not create a lone final item the unbalanced flow avoided,
+  // even when another category already has a lone opening item.
+  const pair=[[0,22,6],[0,0,0]];
+  const lopsided={kind:'menu',categories:pair.map((counts,c)=>({name:`Course ${c+1}`,items:counts.map((n,i)=>({name:`Plate ${i+1}`,description:Array(n).fill('a').join('\n'),price:'9',dietary:'',variations:''}))}))};
+  for(const runs of pieces((await render(lopsided)).output,[3,3]))if(runs.length>1)assert.ok(runs.at(-1).count>=2,'balancing created a lone final item');
   const one=pieces((await render(shortMenu([2,4]),{columns:1})).output,[2,4]);
   assert.ok(one.flat().every(p=>p.column===0),'one column is never balanced');
 });
