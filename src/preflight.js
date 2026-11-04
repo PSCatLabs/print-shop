@@ -34,7 +34,7 @@ export function preflightPrint(document, parameters, result) {
   if (document.kind === 'business-card' && result) {
     if (!/PSCARD 2\n/.test(result.output) || result.svgs?.length!==2) error('content-count','The card did not render exactly one front and one back.');
   }
-  findings.push({severity:'info',code:'outlined-type',message:'Text is vector outlines in the named template fonts (no substitutes). Fonts do not need embedding; text is not searchable.'});
+  findings.push({severity:'info',code:'outlined-type',message:'Text is vector outlines of the engine’s bundled faces, exactly as the template names them, with no fallback face (Times and Helvetica are the metric-compatible Liberation Serif and Sans). Fonts do not need embedding; text is not searchable.'});
   findings.push({severity:'warning',code:'rgb-output',message:'RGB PDF 1.4: no ICC output intent, CMYK separation or PDF/X certification. Confirm acceptance with your printer.'});
   if (document.kind === 'business-card') {
     findings.push({severity:'info',code:'card-geometry',message:'Trim 3.5 × 2 in; 0.125 in bleed on all sides. Text is set inside a 24 pt media inset, with lower-baseline overflow checks.'});

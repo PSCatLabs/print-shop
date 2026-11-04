@@ -57,7 +57,12 @@ back for an unknown name (`/NoSuchFont` becomes Helvetica; `/Palatino-Roman`
 becomes TeX Gyre Pagella) without a warning, so `ps-font` in
 `templates/common.ps` compares the resolved `FontName` with the requested one
 and fails the render with `printshop-font-substituted`. Every face the bundled
-templates use resolves to itself; the check leaves output byte-identical.
+templates use resolves to itself; the check leaves output byte-identical. The
+engine serves the standard names Times and Helvetica with the metric-compatible
+Liberation Serif and Liberation Sans (see `public/licenses/THIRD_PARTY_NOTICES.md`),
+so "no substitution" means no fallback to a different engine face, not Adobe's
+original Times or Helvetica outlines. Since type is outlined, a printer needs no
+fonts either way.
 
 It **warns** about RGB PDF 1.4 output without ICC output intent, CMYK
 separation or PDF/X, and about missing TrimBox/BleedBox, crop marks and menu
