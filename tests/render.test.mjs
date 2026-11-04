@@ -40,6 +40,44 @@ test('small, medium and 500-item menus flow completely within measured column bo
     if(n===40)await saveArtifact('paginated-40-items',r);
   }
 });
+// Group PSITEM placements into category pieces (a category's run of items in one column).
+function pieces(output,sizes){
+  const placed=[...output.matchAll(/PSITEM (\d+) (\d+) ([\d.]+) ([\d.]+)/g)].map(m=>m.slice(1).map(Number));
+  assert.equal(placed.length,sizes.reduce((a,b)=>a+b,0),'every item exactly once');
+  let i=0;return sizes.map(n=>{const runs=[];for(const [page,column,top,bottom] of placed.slice(i,i+n)){
+    const last=runs.at(-1);if(last&&last.page===page&&last.column===column){last.count++;last.bottom=bottom;}else runs.push({page,column,top,bottom,count:1});}
+    i+=n;return runs;});
+}
+const shortMenu=sizes=>({kind:'menu',categories:sizes.map((n,c)=>({name:`Section ${c+1}`,items:Array.from({length:n},(_,i)=>({name:`Dish ${c+1}.${i+1}`,description:i%2?'Garden vegetables with herbs and toasted almonds':'',price:'12',dietary:'',variations:''}))}))});
+test('a category never ends with its final item alone in a new column',async()=>{
+  const sizes=menu.categories.map(c=>c.items.length);
+  for(const t of templates){const runs=pieces((await render(menu,{template:t.id})).output,sizes);
+    assert.ok(runs.some(r=>r.length>1),'the sample splits a category');
+    for(const r of runs)if(r.length>1)assert.ok(r.at(-1).count>=2,`${t.id}: lone continuation`);}
+  for(const n of [40,500]){const data=makeMenu(n);const r=await render(data);
+    for(const runs of pieces(r.output,data.categories.map(c=>c.items.length)))if(runs.length>1)assert.ok(runs.at(-1).count>=2,`${n} items: lone continuation`);}
+});
+test('short two-column menus are balanced without splitting categories needlessly',async()=>{
+  const sample=pieces((await render()).output,menu.categories.map(c=>c.items.length)).flat();
+  const bottom=column=>Math.min(...sample.filter(p=>p.column===column).map(p=>p.bottom));
+  assert.ok(Math.abs(bottom(0)-bottom(1))<60,'sample columns end within one item of each other');
+  const three=pieces((await render(shortMenu([3]))).output,[3]);
+  assert.deepEqual(three[0].map(p=>[p.column,p.count]),[[0,3]],'a three-item category is not split 1 + 2');
+  const six=pieces((await render(shortMenu([2,4]))).output,[2,4]);
+  assert.deepEqual(six.map(runs=>runs.map(p=>[p.column,p.count])),[[[0,2]],[[1,4]]],'two short categories take a column each');
+  // Feasible floors can be half-point intervals (12.5 pt description leading).
+  const lines=[[0,7,1,1,1],[0],[2,5,6,5,2,1]];
+  const uneven={kind:'menu',categories:lines.map((counts,c)=>({name:`Part ${c+1}`,items:counts.map((n,i)=>({name:`Dish ${i+1}`,description:Array(n).fill('a').join('\n'),price:'9',dietary:'',variations:''}))}))};
+  const placed=pieces((await render(uneven)).output,lines.map(l=>l.length)).flat();
+  assert.ok(Math.min(...placed.map(p=>p.bottom))>=157.5,'balance search found the half-point floor');
+  // Balancing must not create a lone final item the unbalanced flow avoided,
+  // even when another category already has a lone opening item.
+  const pair=[[0,22,6],[0,0,0]];
+  const lopsided={kind:'menu',categories:pair.map((counts,c)=>({name:`Course ${c+1}`,items:counts.map((n,i)=>({name:`Plate ${i+1}`,description:Array(n).fill('a').join('\n'),price:'9',dietary:'',variations:''}))}))};
+  for(const runs of pieces((await render(lopsided)).output,[3,3]))if(runs.length>1)assert.ok(runs.at(-1).count>=2,'balancing created a lone final item');
+  const one=pieces((await render(shortMenu([2,4]),{columns:1})).output,[2,4]);
+  assert.ok(one.flat().every(p=>p.column===0),'one column is never balanced');
+});
 test('A4, one column, long wrapped names, newlines and density changes',async()=>{
   const data=makeMenu(20,'Fresh seasonal vegetables with toasted almonds\nServed with bread and a bright lemon dressing.');
   data.categories[0].items[0].name='Slow-roasted garden vegetables with herbs and farmhouse cheese';
@@ -48,6 +86,14 @@ test('A4, one column, long wrapped names, newlines and density changes',async()=
 test('over-wide words, title and oversized blocks fail; interpreter recovers',async()=>{
   const word=makeMenu(1);word.categories[0].items[0].name='W'.repeat(100);await assert.rejects(()=>render(word),/printshop-word-too-wide/);
   const tall=makeMenu(1,Array(55).fill('a').join('\n'));await assert.rejects(()=>render(tall),/printshop-item-too-tall/);
+  const long=makeMenu(500,'a '.repeat(300).trim());await assert.rejects(()=>render(long),/printshop-too-many-pages/,'page limit before the render budget');
+  await assert.rejects(()=>render(makeMenu(500,Array(120).fill('a').join('\n')),{businessName:'W'.repeat(80)}),/printshop-title-too-wide/,'title error before measuring');
+  const wideHeading=makeMenu(500,'a '.repeat(300).trim());wideHeading.categories[0].name='W'.repeat(60);
+  await assert.rejects(()=>render(wideHeading),/printshop-word-too-wide/,'heading checked before its items are measured');
+  const capped=makeMenu(90,Array(20).fill('a').join('\n'));
+  capped.categories.push({name:'Tail',items:makeMenu(410,'a '.repeat(300).trim()).categories.flatMap(c=>c.items).map(i=>({...i,dietary:'a '.repeat(40).trim(),variations:'a '.repeat(120).trim()}))});
+  await assert.rejects(()=>render(capped),/printshop-too-many-pages/,'page limit reached while measuring lazily');
+  const tallLate=makeMenu(500,Array(120).fill('a').join('\n'));await assert.rejects(()=>render(tallLate),/printshop-item-too-tall/,'named error before the render budget');
   await assert.rejects(()=>render(menu,{businessName:'W'.repeat(80)}),/printshop-title-too-wide/);
   assert.equal((await render()).svgs.length,1);
 });

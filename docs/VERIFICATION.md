@@ -1,5 +1,93 @@
 # Verification record — 2026-10-28
 
+## Column balancing and lone continuations (PS-010) — 2026-11-04
+
+`templates/common.ps` now measures each category once, lazily, and runs one flow
+procedure either as an arithmetic-only dry pass or as the drawn pass, so both
+see identical positions.
+
+- **Lone continuation.** When the penultimate item of a category fits but
+  the final one would not, and the column already holds something, the pair
+  moves to the next column together, if the pair and a heading fit a fresh
+  column. Otherwise the greedy break stands.
+- **Balance.** A multi-column menu that fits on one page is set with the
+  highest column floor at which it still fits on that page, in order, without
+  giving any category a kind of single-item piece (an opening item before a
+  break, or a final item after one) that the unbalanced flow avoids. A
+  whole-menu count was not enough: Codex review found balancing could trade
+  one category's lone opening item for another's lone final item; that case
+  is now a test. Feasibility is
+  not monotone in the floor (binary search missed `[2 | 4]` → one category
+  per column), so every candidate floor is scanned. All measured heights and
+  positions are multiples of 0.5 pt, so half-point steps miss no feasible
+  interval; a whole-point scan did (found by Codex review: a menu with 12.5 pt
+  description lines got column bottoms 65.5 / 303 pt instead of 256 / 157.5;
+  now a test). The scan starts at the floor that would just hold the content,
+  which keeps the sample's render at about 80 ms versus 74 ms before. Starting
+  there gave byte-identical output to scanning from the top in all 14
+  comparison cases.
+
+| Case | Before | After |
+| --- | --- | --- |
+| 14-item sample, all templates | "Aubergine & lentils" alone at the top of column 2 under a repeated "From the Kitchen" | "Roast chicken" moves with it; column bottoms 154 / 122.5 pt (were 99.5 / 177) |
+| One category of 3 | column 1 only | unchanged: balancing would split it 1 + 2, which adds a lone piece |
+| Categories of 2 and 4 | both in column 1 | one category per column |
+| 4 + 5 + 2 items | all 11 in column 1 | 4 + 2 \| 3 + 2, bottoms 346.5 / 388 pt |
+| 1 item, one-column menus, airy sample | | byte-identical SVG/PDF |
+| 40 items | 3 pages | 3 pages |
+| 500 items | 30 pages | 32 pages: pairs kept together cost two pages |
+
+The tradeoff: keeping the final pair together leaves a little space at the
+foot of a column, which costs two pages over 500 items; a one-page menu is
+balanced but not justified vertically, so short menus end with white space
+below both columns. Long menus' last pages are not balanced.
+
+Near the 40-page cap this matters. A sweep of 500-item-class menus with 2–5
+item categories found menus that render at 39–40 pages on `main` and now raise
+`printshop-too-many-pages` (for example 2-item categories, 4-line descriptions,
+394–400 items, two columns). Letting the pair rule yield near the cap would
+need a full-menu dry pass, which is the eager measurement that changed named
+errors above, so the cap stays a hard guard and this is accepted: a 40-page
+menu is far outside the intended use. Away from the cap, page counts in the
+sweep matched or grew by at most two.
+
+Two more checks: the balance scan's cost peaked at 1.95 M interpreter steps
+for one-page two-column menus of 1–60 items (12 M budget), and at 825 k for
+lopsided menus with one very tall item. Pages 2–3 of the 40-item menu and page
+16 of the 500-item menu were rasterized and viewed: continuation headings,
+names, descriptions and prices are painted, and page 16 shows a final pair
+kept together under its repeated heading.
+
+One review finding was not changed: a 460-item single-category menu whose
+`main` render used the entire 12 M-step budget (12,025,000 steps) before its
+page-limit error now hits the budget slightly earlier. The budget is a resource
+guard, and any added per-item work moves inputs that sit exactly on it.
+
+Before and after (Classic Bistro sample, then the 2 + 4 menu):
+[before](verification/ps-010/sample-classic-before.png),
+[after](verification/ps-010/sample-classic-after.png),
+[before](verification/ps-010/short-6-before.png),
+[after](verification/ps-010/short-6-after.png). All three templates, A4,
+compact and short fixtures were rasterized with `pdftoppm` and viewed.
+
+Named errors must come out exactly as on `main`. An intermediate version
+measured the whole menu before the flow, and Codex review found inputs where
+that turned `printshop-item-too-tall`, `printshop-too-many-pages` or a heading's
+`printshop-word-too-wide` into the generic render-budget error. Categories are
+now measured lazily, heading first, when a pass reaches them, and then cached.
+Page 1's masthead is drawn before any measuring, the first dry pass stops work
+once it passes page 1, and only a menu that fits one page (hence fully
+measured) is balanced. A long menu therefore measures and draws in the same
+interleaved order as before. Ten adversarial cases (title, subtitle, words in
+items and headings, early and late too-tall items, page limit in one and two
+columns) give the same result as `main`'s template; four are tests.
+
+New tests (`tests/render.test.mjs`) read the PSITEM placements and fail on
+the old layout: no category ends with a lone continuation (all three
+templates, 40 and 500 items), and short-menu balance (sample columns end
+within 60 pt, 3 items stay together, 2 + 4 take a column each, one column is
+never balanced, and both Codex counterexamples). `npm test`: 20 tests pass.
+
 ## Headless and served-edition browser acceptance (PS-009) — 2026-11-04
 
 Host: macOS 15 (Darwin 24.6), Node 24.14.0, Google Chrome 156.0.8078.80,
@@ -110,8 +198,8 @@ Classic Bistro, Modernist, Retro Diner, and both business-card sides. Typography
 prices align, category hierarchy and ornamentation are restrained, descriptions
 wrap without collision, and margins are intentional. Output files are
 regenerated by tests in `artifacts/` and are not static previews in the app.
-The sample's greedy flow can leave one category item at the top of the next
-column; PS-010 records the composition improvement separately.
+At the time, the sample's greedy flow left one category item at the top of the
+next column; PS-010 (below, 2026-11-04) fixed it.
 
 ## Real-browser continuation: passed offline desktop and mobile
 
