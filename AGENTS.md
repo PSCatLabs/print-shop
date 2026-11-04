@@ -21,7 +21,8 @@ before changing rendering. `docs/ROADMAP.md` links the durable issue definitions
 - Functional quotations capture values, not lexical scope. Keep callback
   operand effects balanced. Put artkit's scratch definitions in a local dict.
 - Preserve font/library/dependency notices with distributed WASM artifacts.
-- Do not implement QR encoding here. Integrate the future upstream PS library.
+- Do not implement QR encoding here. QR comes only from pscat's `lib/qr.ps`
+  (`qrencode`/`qrdraw`, embedded in the engine); verify with `npm run test:qr`.
 - Print preflight must distinguish a downloadable proof from a production-
   certified file. Document exporter limitations in the UI as well as docs.
 - No external orchestration database or independent MCP rendering pipeline.

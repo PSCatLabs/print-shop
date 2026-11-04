@@ -226,7 +226,7 @@
     "id": "PS-013",
     "phase": 7,
     "title": "Integrate the upstream pure PostScript QR library when its API is ready",
-    "status": "Open — upstream lib/qr.ps is on pscat main; blocked by the engine repin (#16)",
+    "status": "Implemented 2026-11-04: optional card QR via pscat lib/qr.ps (main db44e12); SVG/PDF/PNG decoded independently",
     "dependsOn": [
       "PS-007"
     ],
@@ -237,7 +237,7 @@
       "Scan actual exported SVG/PDF/PNG fixtures independently.",
       "Keep QR-free rendering available with no provider/API dependency."
     ],
-    "evidence": "docs/ARCHITECTURE.md QR integration boundary",
+    "evidence": "templates/business-card.ps; scripts/qr-check.mjs; src/browser-tests.js; docs/VERIFICATION.md",
     "url": "https://github.com/PSCatLabs/print-shop/issues/13"
   },
   {

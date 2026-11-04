@@ -49,7 +49,7 @@ export function compileCard(card, parameters, sources) {
   if (!sources.common || !sources.card) throw new Error('Business card template is missing.');
   // 252 x 144 pt trim, plus 9 pt (1/8 inch) bleed on each edge.
   const width=270, height=162;
-  const fields = ['name','role','email','phone','website','address'].map(key=>`/${key} ${psString(card[key])}`).join(' ');
+  const fields = ['name','role','email','phone','website','address'].map(key=>`/${key} ${psString(card[key])}`).join(' ')+` /qr ${psString(card.qr ?? '')}`;
   return {width,height,source:`%!PS-Adobe-3.0\n%%Title: Printshop business card\n%%EndComments\n` +
     configuration(parameters,width,height) + `/Card << ${fields} >> def\n` + sources.common + '\n' + sources.card + '\nps-layout-card\n'};
 }

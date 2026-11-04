@@ -61,6 +61,23 @@ try{
     $('card-mode').click();await preview();assert($('page-number').textContent.includes('Front'),'Card front missing');
     assert($('preflight-results').textContent.includes('TrimBox'),'Missing print limitation');
     $('next').click();await preview();assert($('page-number').textContent.includes('Back'),'Card back missing');
+  });
+  await check('card QR code from pscat lib/qr.ps decodes from the exported PNG',async()=>{
+    input('card-qr','https://example.com/menu\u20142026');await done('error');
+    assert($('status').textContent.includes('plain ASCII'),'A typographic dash must be rejected, not rewritten');assert($('export-png').disabled,'Exports stay disabled');
+    const link='https://example.com/menu?table=12';
+    input('card-qr',link);await preview();
+    if($('page-number').textContent.includes('Front')){$('next').click();await preview();}
+    assert($('preflight-results').textContent.includes('QR code on the back'),'Missing QR preflight note');
+    captured=[];$('export-png').click();
+    const start=performance.now();while(captured.length<1&&performance.now()-start<10000)await tick();
+    assert(captured.length===1,'PNG download missing');
+    if('BarcodeDetector' in self){
+      const image=await createImageBitmap(new Blob([await captured[0].bytes],{type:'image/png'}));
+      const codes=await new BarcodeDetector({formats:['qr_code']}).detect(image);
+      assert(codes.length===1&&codes[0].rawValue===link,'Exported PNG did not decode to the link: '+JSON.stringify(codes.map(c=>c.rawValue)));
+    } else checks.push('note: BarcodeDetector unavailable; QR decode skipped');
+    input('card-qr','');await preview();
     $('menu-mode').click();$('sample').click();input('business-name','The Olive Room');input('palette','olive');await preview();
   });
   await check('rapid changes preserve only the latest complete edition',async()=>{

@@ -112,9 +112,31 @@ test('business card: two vector sides, bleed media, safe-area overflow and QR bo
   const r=renderer.render(compileCard(card,defaults,cardSources));assert.equal(r.svgs.length,2);assert.match(r.output,/PSCARD 2/);
   assert.match(Buffer.from(r.pdf).toString('latin1'),/\/MediaBox \[0 0 270 162\]/);
   const preflight=preflightPrint(card,defaults,r);assert.equal(preflight.productionCertified,false);assert.ok(preflight.findings.some(f=>f.code==='missing-page-boxes'));
-  assert.throws(()=>compileCard({...card,qr:'https://example.com'},defaults,cardSources),/awaiting/);
+  const withQr=renderer.render(compileCard({...card,qr:'https://example.com/menu'},defaults,cardSources));
+  assert.equal(withQr.svgs.length,2);assert.match(withQr.output,/PSQR \d+ \/?Q [\d.]+ \d+\n/);
+  const qrReport=preflightPrint({...card,qr:'https://example.com/menu'},defaults,withQr);
+  assert.equal(qrReport.readyForReview,true);assert.ok(qrReport.findings.some(f=>f.code==='qr-code'));
+  assert.equal(preflightPrint({...card,qr:'https://example.com/menu'},defaults,r).findings.find(f=>f.severity==='error')?.code,'qr-missing');
+  assert.equal(withQr.svgs[0],r.svgs[0],'the front is unchanged by a QR on the back');
+  assert.throws(()=>compileCard({...card,qr:'https://例え.jp'},defaults,cardSources),/plain ASCII/);
+  assert.throws(()=>compileCard({...card,qr:'x'.repeat(201)},defaults,cardSources),/200 characters/);
   assert.throws(()=>renderer.render(compileCard({...card,address:Array(15).fill('Address').join('\n')},defaults,cardSources)),/printshop-card-overflow/);
   await saveArtifact('business-card',r);
+});
+test('card QR: module grid, safe area, density limit and lib/qr.ps errors',async()=>{
+  const card={kind:'business-card',name:'Alex Morgan',role:'Owner & host',email:'hello@example.com',phone:'(415) 555-0128',website:'example.com',address:'42 Orchard Street'};
+  const cardSources={common,card:await readFile('templates/business-card.ps','utf8')};
+  for(const qr of ['https://example.com','https://example.com/menus/autumn-2026?table=12','WIFI:T:WPA;S:Olive Room;P:correct horse battery;;','x'.repeat(120)]){
+    const r=renderer.render(compileCard({...card,qr},defaults,cardSources));
+    const [,version,,module,n]=/PSQR (\d+) \/?([LMQH]) ([\d.]+) (\d+)/.exec(r.output).map((v,i)=>i&&i!==2?Number(v):v);
+    const px=module*300/72;assert.ok(Math.abs(px-Math.round(px))<1e-6&&px>=4,`whole 300 dpi pixels per module (${px})`);
+    assert.equal(n,17+4*version+8);assert.ok(module*n<=72.0001,'at most 1 in square');
+  }
+  assert.match(renderer.render(compileCard({...card,qr:'x'.repeat(200)},defaults,cardSources)).output,/PSQR 12 \/?Q 0.96 73/,'the 200-character limit still prints 4 px modules');
+  const dense=compileCard({...card,qr:'x'},defaults,cardSources);
+  assert.throws(()=>renderer.render({...dense,source:dense.source.replace('/qr (x)',`/qr (${'x'.repeat(230)})`)}),/printshop-qr-too-dense/,'backstop past the validated length');
+  const job=compileCard({...card,qr:'https://example.com'},defaults,cardSources);
+  assert.throws(()=>renderer.render({...job,source:job.source.replace('<< /Level /Q >> qrencode','<< /Level /Z >> qrencode')}),/qr-level-must-be-L-M-Q-or-H/,'library errors surface by name');
 });
 test('preflight reports missing output and exporter limitations truthfully',async()=>{
   assert.equal(preflightPrint(menu,defaults,null).readyForReview,false);

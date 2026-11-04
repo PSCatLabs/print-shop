@@ -9,6 +9,7 @@
     "build": "node scripts/build.mjs",
     "test": "node --test tests/*.test.mjs",
     "test:browser": "node scripts/browser-check.mjs",
+    "test:qr": "node scripts/qr-check.mjs",
     "engine:build": "python3 scripts/build-engine.py",
     "issues:publish": "node scripts/publish-issues.mjs"
   }

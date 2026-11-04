@@ -12,7 +12,7 @@ status and acceptance criteria; each maps to its GitHub issue URL.
 | 4 | Deterministic layout and pagination | PS-004, PS-010 | Measured flow, lone-continuation look-ahead and one-page column balancing |
 | 5 | Additional visual templates | PS-005 | All three verified in desktop/mobile Chrome |
 | 6 | SVG/PDF export | PS-006, PS-009 | Offline and served browser exports pass (headless Chrome, desktop and mobile) |
-| 7 | Business-card support | PS-007, PS-013 | Two-sided card passes browser tests; upstream QR dependency pending |
+| 7 | Business-card support | PS-007, PS-013 | Two-sided card with optional QR from pscat's lib/qr.ps, decoded independently |
 | 8 | Print preflight and production readiness | PS-008, PS-011 | Basic preflight; advanced exporter requirements open |
 | 9 | Future fulfillment and MCP integration | PS-014, PS-015 | Boundaries documented; no provider/agent/server implemented |
 
@@ -25,5 +25,5 @@ in `verification/`. The repository is published at PSCatLabs/print-shop.
 
 PS-010 is complete: short menus are balanced and a category's final item
 never continues alone. PS-011 addresses production metadata with upstream PSCat.
-QR and template import remain dependency-/validation-gated. Fulfillment and
+Template import remains validation-gated. Fulfillment and
 MCP are later adapters, not prerequisites for downloading a useful menu.

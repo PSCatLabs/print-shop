@@ -96,6 +96,10 @@ export function validateCard(card) {
     if (issue) issues.push(issue);
   }
   if (typeof card.name === 'string' && card.name.includes('\n')) issues.push('Card name must be on one line.');
-  if (card.qr) issues.push('QR codes are awaiting the upstream PSCat PostScript library.');
+  if (card.qr !== undefined && card.qr !== '') {
+    // Printable ASCII only: lib/qr.ps encodes raw bytes with no ECI, and URLs are ASCII.
+    if (typeof card.qr !== 'string' || !/^[\x20-\x7e]+$/.test(card.qr)) issues.push('QR link must be plain ASCII text, such as a web address.');
+    else if (card.qr.length > 200) issues.push('QR link exceeds 200 characters; a shorter link scans more reliably.');
+  }
   if (issues.length) throw new ValidationError(issues);
 }

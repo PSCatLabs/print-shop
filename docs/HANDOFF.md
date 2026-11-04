@@ -33,16 +33,18 @@ host's Homebrew Node was broken.
   `patches/`. It is not in a pscat release yet; repin to the first release
   that includes both when it ships (`scripts/build-engine.py`, update `PIN`).
   The templates keep `fp-map`/`fp-each`/`fp-curry` per the owner's decision.
-- Next: #13 (QR) through pscat's `lib/qr.ps` (on `main`, see
-  `docs/guides/qr-codes.md` upstream). Scan exported SVG/PDF/PNG with an
-  independent decoder.
+- #13 is done: optional card QR through pscat's `lib/qr.ps`. `npm run
+  test:qr` decodes SVG, Poppler-rasterized PDF and PNG with Chrome's
+  `BarcodeDetector`, and the browser suite decodes the app's PNG download.
+- Open, not started: #11 (page boxes/color intent; needs upstream exporter
+  work).
 - Deferred: #12, #14, #15, #17.
 
 ## What works under automated verification
 
 CSV → typed/validated model → escaped PS content → shared measured PS layout →
 real WASM execution → outlined vector SVG/native PDF. Three menu styles,
-parameter changes, 1/40/500-item menus and two-sided QR-free cards are covered.
+parameter changes, 1/40/500-item menus and two-sided cards with and without a QR code are covered.
 The app includes UI upload/edit, customization, paging, exports and preflight.
 The offline package resolves all real JS modules, restores the exact engine,
 and executes its actual packaged classic worker under Node. Headless browser
@@ -68,7 +70,8 @@ the UI clears an earlier error immediately and keeps stale exports disabled.
   dashes and ellipses are normalized; accented Latin-1 is supported.
 - RGB PDF 1.4 with outlined type. No ICC intent, PDF/X validation, trim/bleed
   metadata or crop marks. Card media has geometric bleed; menu media does not.
-- No local QR encoder. Upstream library integration is PS-013.
+- No local QR encoder: QR comes from pscat's `lib/qr.ps` (PS-013). Payloads
+  are printable ASCII up to 200 bytes (about 6.9 M of the 12 M step budget).
 - Trusted bundled templates only. External package validation is PS-014.
 - No authentication, billing, backend, ecommerce, fulfillment adapter or MCP
   server. Future boundaries are documented without introducing dependencies.
