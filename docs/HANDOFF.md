@@ -23,10 +23,20 @@ host's Homebrew Node was broken.
 - PS-009 (#9) is done: `npm run test:browser` drives headless Chrome over the
   DevTools protocol and passes offline and served editions at desktop and
   390 px mobile. Run it after any UI or rendering change.
-- PS-010 (#10) is done: see `docs/VERIFICATION.md` for the layout tradeoff.
-- Next: PS-008 (#8) preflight acceptance, then
-  #16 (repin to a released pscat once PSCatLabs/pscat#1003 lands its WASM
-  SVG/PDF output and the functional library is on pscat main) and #13 (QR).
+- PS-010 (#10) is done: see `docs/VERIFICATION.md` for the layout tradeoff,
+  including menus near the 40-page cap.
+- PS-008 (#8) is done: preflight blocks on missing output, engine warnings,
+  media size, counts and bounds; `ps-font` refuses a substituted face; a test
+  ties every stated exporter limitation to the PDF bytes. See
+  `docs/PRINT-PRODUCTION.md`.
+- Next: #16, repin to a released pscat. It is blocked upstream: the WASM
+  SVG/PDF output (PSCatLabs/pscat#1003) was still open on 2026-11-04. When it
+  merges, its final ABI is posted as a comment on #16. **Owner decision
+  (2026-11-04):** keep `lib/functional.ps` (`fp-map`/`fp-each`/`fp-curry`) in
+  the templates; pscat is merging its functional library (PSCatLabs/pscat#923)
+  into main, so the repin picks it up there. #16's acceptance line "No
+  template uses lib/functional.ps" is superseded. Repin only once both #1003
+  and #923 are on pscat main. Then #13 (QR via pscat's `lib/qr.ps`).
 - Deferred: #12, #14, #15, #17.
 
 ## What works under automated verification
