@@ -3,7 +3,7 @@
     "id": "PS-001",
     "phase": 1,
     "title": "Bootstrap standalone app and pin PSCat WASM vector bridge",
-    "status": "Implemented locally; remote publication pending",
+    "status": "Implemented and published; engine now unmodified pscat main db44e12 (#16), no local patch",
     "dependsOn": [],
     "scope": "Create the standalone static application, reuse the actual upstream wrapper, and expose the existing SVG/PDF recorders through a minimal versioned adapter.",
     "acceptance": [
@@ -19,7 +19,7 @@
     "id": "PS-002",
     "phase": 2,
     "title": "Import and validate typed menu CSV data",
-    "status": "Implemented locally",
+    "status": "Implemented; covered by npm test",
     "dependsOn": [
       "PS-001"
     ],
@@ -37,7 +37,7 @@
     "id": "PS-003",
     "phase": 3,
     "title": "Complete the Classic Bistro PostScript menu template",
-    "status": "Implemented; offline desktop/mobile Chrome acceptance passed",
+    "status": "Implemented; headless offline and served desktop/mobile acceptance passed",
     "dependsOn": [
       "PS-001",
       "PS-002"
@@ -56,7 +56,7 @@
     "id": "PS-004",
     "phase": 4,
     "title": "Measure blocks and flow menus across columns and pages",
-    "status": "Implemented locally",
+    "status": "Implemented; extended by PS-010",
     "dependsOn": [
       "PS-003"
     ],
@@ -74,7 +74,7 @@
     "id": "PS-005",
     "phase": 5,
     "title": "Add Modernist and Retro Diner PostScript compositions",
-    "status": "Implemented; offline desktop/mobile Chrome acceptance passed",
+    "status": "Implemented; headless offline and served desktop/mobile acceptance passed",
     "dependsOn": [
       "PS-004"
     ],
@@ -92,7 +92,7 @@
     "id": "PS-006",
     "phase": 6,
     "title": "Export complete SVG/PDF documents and selected-page PNG",
-    "status": "Native vector API and offline browser SVG/PDF/PNG exports verified",
+    "status": "Implemented; native SVG/PDF and browser SVG/PDF/PNG exports verified offline and served",
     "dependsOn": [
       "PS-004"
     ],
@@ -110,7 +110,7 @@
     "id": "PS-007",
     "phase": 7,
     "title": "Render a QR-free two-sided business card with bleed geometry",
-    "status": "Implemented; offline desktop/mobile front/back acceptance passed",
+    "status": "Implemented; front/back acceptance passed offline and served (QR added by PS-013)",
     "dependsOn": [
       "PS-006"
     ],
