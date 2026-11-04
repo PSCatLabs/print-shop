@@ -24,8 +24,8 @@ npm run build
 
 The offline file contains the same app, templates and actual WASM. It requires
 a modern browser with workers, Blob URLs and native gzip decompression.
-Chrome 156 passed all nine workflow checks at desktop and 390 px mobile
-viewports. The offline worker is packaged as a single classic script so it
+Headless Chrome 156 passes all nine workflow checks in both the offline file
+and the served edition, at desktop and 390 px mobile viewports. The offline worker is packaged as a single classic script so it
 can start from a file origin. The served edition uses ordinary module workers.
 
 ## Included
@@ -53,7 +53,7 @@ capabilities. Source/patch/artifact hashes are in
 ```sh
 npm test                    # parser/schema, real WASM, layout, exports, packaging
 npm run build               # verifies WASM provenance and emits static/offline builds
-npm run test:browser        # real Chrome UI/download checks; set CHROME_BIN if needed
+npm run test:browser        # headless Chrome, offline + served, desktop + mobile; set CHROME_BIN if needed
 python3 scripts/build-engine.py
 # Or reuse a dedicated checkout at the exact pin:
 python3 scripts/build-engine.py --source /path/to/pscat --offline
@@ -67,8 +67,8 @@ Tests generate actual PDFs/SVGs under ignored `artifacts/` for inspection.
 ## Status and next work
 
 The rendering API, generated documents and offline browser workflow are
-verified. The served-site check, GitHub publication and production PDF metadata
-remain unfinished. PDFs use RGB
+verified in both the offline and served editions. Production PDF metadata
+remains unfinished. PDFs use RGB
 and outlined type, with no ICC output intent, PDF/X certification, TrimBox,
 BleedBox or crop marks. Menus have no additional bleed. QR awaits the separate
 upstream PS library; XLSX, arbitrary template import, fulfillment and MCP are

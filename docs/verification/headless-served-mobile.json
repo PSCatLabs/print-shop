@@ -1,0 +1,65 @@
+{
+  "configuration": "served-mobile",
+  "edition": "served",
+  "url": "http://127.0.0.1:56224/",
+  "browser": "Google Chrome 156.0.8078.80",
+  "date": "2026-11-04T22:36:00.443Z",
+  "viewport": {
+    "width": 390,
+    "height": 844,
+    "deviceScaleFactor": 3,
+    "mobile": true
+  },
+  "horizontalFit": {
+    "scrollWidth": 390,
+    "innerWidth": 390
+  },
+  "requestCount": 107,
+  "nonBlobRequests": [
+    "/",
+    "/?browser-test",
+    "/public/engine/pscat.js",
+    "/public/engine/pscat.wasm",
+    "/public/example-menu.csv",
+    "/src/app.js",
+    "/src/assets.js",
+    "/src/browser-tests.js",
+    "/src/csv.js",
+    "/src/model.js",
+    "/src/postscript.js",
+    "/src/preflight.js",
+    "/src/render-worker.js",
+    "/src/renderer.js",
+    "/styles.css",
+    "/templates/business-card.ps",
+    "/templates/classic-bistro.ps",
+    "/templates/common.ps",
+    "/templates/modernist.ps",
+    "/templates/retro-diner.ps"
+  ],
+  "requestSchemes": [
+    "blob",
+    "http"
+  ],
+  "suite": {
+    "state": "passed",
+    "userAgent": "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Mobile Safari/537.36",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "checks": [
+      "initial sample renders actual vector SVG",
+      "business name and palette rerender",
+      "each template executes PostScript",
+      "SVG, PDF and PNG downloads are real files",
+      "invalid CSV disables exports and shows a useful error",
+      "CSV file upload and pagination through the actual UI",
+      "card front/back and print limitations are visible",
+      "rapid changes preserve only the latest complete edition",
+      "interface fits the browser viewport"
+    ]
+  },
+  "problems": [],
+  "state": "passed"
+}

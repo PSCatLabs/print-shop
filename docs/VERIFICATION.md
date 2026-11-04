@@ -1,5 +1,55 @@
 # Verification record — 2026-10-28
 
+## Headless and served-edition browser acceptance (PS-009) — 2026-11-04
+
+Host: macOS 15 (Darwin 24.6), Node 24.14.0, Google Chrome 156.0.8078.80,
+headless. `npm test` (18 tests) and `npm run build` pass first.
+
+The old harness passed `--dump-dom` to headless Chrome, which snapshots the
+DOM at the load event, before the asynchronous in-page suite reports. It
+exited 0 with no report on this host too, so the earlier failure was the
+harness, not only the sandbox. `scripts/browser-check.mjs` now drives Chrome
+over the DevTools protocol (`--remote-debugging-pipe`, no port, no npm
+dependencies). For each configuration it:
+
+1. loads the page and waits for the first real render, saves a viewport and
+   a full-page screenshot, and checks `scrollWidth <= innerWidth`;
+2. reloads with `?browser-test` and waits for the nine-check in-page suite;
+3. fails on any page or worker exception, `console.error` or browser error
+   log entry (worker targets are auto-attached);
+4. fails, rather than waits, when Chrome is missing or exits, and times out
+   any DevTools command after 30 s;
+5. for the file edition, fails on any request that is not `file:`, `blob:`
+   or `data:`, and runs Chrome behind a dead proxy (`127.0.0.1:9`) so an HTTP
+   request could not succeed anyway.
+
+| Configuration | Edition | Viewport | Suite | Problems | Requests |
+| --- | --- | --- | --- | --- | --- |
+| offline-desktop | `dist/printshop-offline.html` | 1440 × 900 | 9/9 passed | none | `file:`, `blob:` only |
+| offline-mobile | `dist/printshop-offline.html` | 390 × 844 @3x, mobile, Android UA | 9/9 passed | none | `file:`, `blob:` only |
+| served-desktop | `scripts/serve.mjs --dist` | 1440 × 900 | 9/9 passed | none | app modules, templates, `pscat.wasm` over HTTP |
+| served-mobile | `scripts/serve.mjs --dist` | 390 × 844 @3x, mobile, Android UA | 9/9 passed | none | as above |
+
+The nine checks are those listed below for the offline continuation: initial
+vector SVG, name/palette rerender, all three templates, real SVG/PDF/PNG
+bytes with a 2550 px (300 ppi) PNG, invalid CSV with disabled exports, file
+upload and pagination, card front/back with print notes, rapid edits, and
+viewport fit. Reports: [`verification/headless-*.json`](verification/).
+
+The first served run found one real defect: the page had no icon, so the
+browser requested `/favicon.ico` and logged a 404. `index.html` now declares an
+empty data-URL icon. The served run's request list shows the worker's
+`pscat.wasm` fetch, which confirms worker traffic is observed, so the offline
+edition's `file:`/`blob:`-only result is meaningful. A negative probe (an
+exception injected into the served `app.js`) made the harness report FAIL.
+
+Screenshots (regenerated under ignored `artifacts/browser-*.png`) were viewed:
+desktop shows the full studio with the two-column Classic Bistro preview,
+export row and print notes; mobile stacks controls, template picker, preview,
+exports and print notes in one column with no horizontal clipping.
+The mobile run is Chrome device emulation, not a physical Android device or
+Safari.
+
 ## Publication — 2026-11-04
 
 Published to `PSCatLabs/print-shop` with ordinary `git push`. The
@@ -90,7 +140,10 @@ also saved normally as `artifacts/browser-menu.pdf`. `pdfinfo` confirms one
 612 × 792 pt page, producer `pscat`, PDF 1.4, and `cmp` confirms exact equality
 with the Node-rendered `artifacts/classic-bistro.pdf`.
 
-## Blocked checks — not counted as passed
+## Blocked checks at the time (2026-10-28) — resolved 2026-11-04
+
+The served edition and headless runner now pass (see the top of this file);
+GitHub publication happened on 2026-11-04.
 
 - `npm run dev`: socket bind rejected with `EPERM` for `127.0.0.1:5173`.
 - The Chrome headless runner still aborts before producing a DOM report or
@@ -109,6 +162,5 @@ with the Node-rendered `artifacts/classic-bistro.pdf`.
 
 Use the README commands on a host with normal CLI/browser access. A generated
 `dist/printshop-offline.html` is available for direct opening; the static
-edition serves from `dist/`. Offline browser acceptance passes; run the served
-edition and headless harness on a host with normal permissions before closing
-the complete PS-009 issue.
+edition serves from `dist/`. `npm run test:browser` runs the offline and served
+editions at desktop and mobile viewports.

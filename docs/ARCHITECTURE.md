@@ -63,8 +63,8 @@ Future MCP operations call these APIs; no separate rendering implementation.
    unchanged. The served edition still uses the original ES module wrapper and
    module worker. This is packaging of the same renderer, not a second pipeline.
    It requires workers, Blob URLs, WASM and native gzip `DecompressionStream`.
-   Desktop and mobile offline workflows pass in Chrome 156. The served-site
-   check remains blocked by this environment's localhost restrictions.
+   Both editions pass the headless browser suite in Chrome 156 at desktop and
+   390 px mobile viewports (`npm run test:browser`).
 8. **QR stays upstream.** Cards are QR-free. A future QR adapter accepts
    `{payload, sizePt, quietZoneModules, errorCorrection}` and loads a versioned
    PSCat library, invoking its documented PS entry point inside a bounded card
