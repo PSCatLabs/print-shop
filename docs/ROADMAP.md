@@ -6,14 +6,14 @@ status and acceptance criteria; each maps to its GitHub issue URL.
 
 | Phase | Focus | Issue IDs | Current state |
 | --- | --- | --- | --- |
-| 1 | Repository bootstrap and WASM integration | PS-001 | Local app/repository, pinned bridge built; remote blocked |
+| 1 | Repository bootstrap and WASM integration | PS-001 | Published; unmodified pscat main WASM with upstream SVG/PDF output |
 | 2 | Structured menu data model | PS-002, PS-012 | CSV implemented; XLSX and broader encoding optional |
 | 3 | First complete menu template | PS-003 | Classic Bistro verified in WASM and desktop/mobile Chrome |
 | 4 | Deterministic layout and pagination | PS-004, PS-010 | Measured flow, lone-continuation look-ahead and one-page column balancing |
 | 5 | Additional visual templates | PS-005 | All three verified in desktop/mobile Chrome |
 | 6 | SVG/PDF export | PS-006, PS-009 | Offline and served browser exports pass (headless Chrome, desktop and mobile) |
 | 7 | Business-card support | PS-007, PS-013 | Two-sided card with optional QR from pscat's lib/qr.ps, decoded independently |
-| 8 | Print preflight and production readiness | PS-008, PS-011 | Basic preflight; advanced exporter requirements open |
+| 8 | Print preflight and production readiness | PS-008, PS-011 | Truthful preflight (PS-008); page boxes/color intent need upstream work (PS-011) |
 | 9 | Future fulfillment and MCP integration | PS-014, PS-015 | Boundaries documented; no provider/agent/server implemented |
 
 ## Recommended next session
