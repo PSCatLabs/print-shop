@@ -18,7 +18,8 @@ a 24 pt media inset, and bottom baselines are checked before export. PDF front
 and back are separate pages with no imposition or duplex flipping assumption.
 
 The PS layout refuses over-wide words, prices and names, over-tall items, card
-contact overflow, oversized subtitles and more than 40 pages. UI data/schema
+contact overflow, oversized subtitles and QR links too long for a 1 in
+symbol. There is no page cap. UI data/schema
 checks run before composition. Preflight checks are described below.
 
 ## Exporter findings at the pinned commit

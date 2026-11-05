@@ -3,7 +3,6 @@ import { normalizeText, validateMenu, ValidationError } from './model.js';
 /** RFC 4180-style CSV, including quoted commas, newlines and escaped quotes. */
 export function parseCSV(text) {
   if (typeof text !== 'string' || !text.trim()) throw new ValidationError(['The CSV file is empty.']);
-  if (new TextEncoder().encode(text).length > 512 * 1024) throw new ValidationError(['CSV must be smaller than 512 KB.']);
   text = text.replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n');
   const rows = [];
   let row = [], field = '', quoted = false, afterQuote = false;
@@ -22,7 +21,6 @@ export function parseCSV(text) {
     else if (afterQuote && ch === ' ') { /* tolerate trailing spaces after a quoted cell */ }
     else if (afterQuote || ch === '"') throw new ValidationError([`Malformed CSV near character ${i + 1}: unexpected text or quote.`]);
     else field += ch;
-    if (rows.length > 501) throw new ValidationError(['This edition supports at most 500 menu items.']);
   }
   if (quoted) throw new ValidationError(['CSV has an unclosed quoted cell.']);
   if (field || row.length || afterQuote) pushRow();

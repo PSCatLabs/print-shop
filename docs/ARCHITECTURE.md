@@ -49,14 +49,19 @@ Future MCP operations call these APIs; no separate rendering implementation.
    balances the columns. Type is never shrunk. There is no hyphenation,
    kerning-aware shaping, general widow/orphan optimization, last-page
    balancing of long menus, or complete publishing engine.
-4. **Bounded data and trusted templates.** CSV is capped at 512 KB / 500 items;
-   fields and parameters have explicit limits. Literal strings escape every
+4. **Physical limits only, and trusted templates.** No caps on CSV size, item
+   count, field length or pages; measured layout raises a named error when
+   content cannot fit its area, and QR length is limited only by capacity at a
+   printable module size (#31). Literal strings escape every
    delimiter and byte. Latin-1 is explicitly re-encoded into the bundled
    standard fonts. Common pasted smart punctuation is normalized; other scripts
    and emoji are rejected with an error. Fonts are outlined by PSCat.
 5. **Worker isolation and cancellation.** Every browser job gets a worker and
-   a fresh interpreter. New edits terminate stale work. Object slices yield;
-   a 12-million-object budget and 20-second external watchdog bound failures.
+   a fresh interpreter. New edits terminate stale work. Work runs in 25,000-object
+   slices; between them the worker reports pages so far, and the user can
+   cancel (terminate) it;
+   there is no time or step budget in the browser. `VectorRenderer` takes an
+   optional `maxSteps` for callers without a cancel control.
    UI downloads are disabled for pending, invalid and failed renders. Last
    successful previews remain visibly labeled as old until replaced. This is
    not a general sandbox for externally authored PostScript.
@@ -80,7 +85,8 @@ Future MCP operations call these APIs; no separate rendering implementation.
    Both editions pass the headless browser suite in Chrome 156 at desktop and
    390 px mobile viewports (`npm run test:browser`).
 8. **QR stays upstream.** A card's optional `qr` payload (printable ASCII, at
-   most 200 bytes) is escaped like all content. The card template loads
+   most 203 bytes, the capacity at a 4 px module size) is escaped like all
+   content. The card template loads
    pscat's embedded `lib/qr.ps` only when a payload is present, encodes it
    with `qrencode` at level Q, and draws it with `qrdraw` in the card's ink on
    its paper, lower right inside the safe area, at most 72 pt square with the

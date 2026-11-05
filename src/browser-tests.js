@@ -59,6 +59,38 @@ try{
     await preview();assert(!$('next').disabled,'Large menu did not paginate');const first=await preview();
     $('next').click();assert(await preview()!==first,'Page navigation did not change SVG');
   });
+  await check('a long render shows progress and can be cancelled; no page cap',async()=>{
+    // About 90 pages: past the old 40-page cap and 12 M-step budget.
+    const rows=['Category,Item name,Description,Price'],text='a '.repeat(300).trim();
+    for(let i=0;i<500;i++)rows.push(`Chapter ${Math.floor(i/10)+1},Seasonal plate ${i+1},${text},18.50`);
+    // Record worker termination, so the check proves Cancel stops the work and
+    // does not merely ignore the worker's later messages.
+    const terminate=Worker.prototype.terminate;let terminated=0;
+    Worker.prototype.terminate=function(){terminated++;return terminate.call(this);};
+    try{
+      $('csv-editor').value=rows.join('\n');$('apply-csv').click();
+      // Wait for a progress message (the menu takes several seconds), then cancel.
+      let start=performance.now();
+      while(!/\d+ pages? so far/.test($('status').textContent)){
+        if(document.documentElement.dataset.renderState!=='running')throw Error('Render ended before any progress: '+$('status').textContent);
+        if(performance.now()-start>20000)throw Error('No progress was reported');await tick();}
+      assert(!$('cancel-render').hidden,'Cancel is not offered while rendering');
+      const before=terminated;$('cancel-render').click();
+      assert(terminated===before+1,'Cancel did not terminate the worker');
+    }finally{Worker.prototype.terminate=terminate;}
+    let start;
+    assert(document.documentElement.dataset.renderState==='cancelled'&&$('cancel-render').hidden,'Cancel did not stop the render');
+    assert($('export-pdf').disabled&&$('status').textContent.includes('cancelled'),'Cancelled render left exports enabled');
+    await new Promise(resolve=>setTimeout(resolve,500));
+    assert(document.documentElement.dataset.renderState==='cancelled','A cancelled render still completed');
+    // Let a long menu finish: every item is set, well past 40 pages.
+    rows.length=251;$('csv-editor').value=rows.join('\n');$('apply-csv').click();
+    start=performance.now();
+    while(document.documentElement.dataset.renderState!=='complete'){if(performance.now()-start>60000)throw Error('Long render did not finish: '+$('status').textContent);if(document.documentElement.dataset.renderState==='error')throw Error($('status').textContent);await tick();}
+    const pages=Number(/\/ (\d+)/.exec($('page-number').textContent)[1]);
+    assert(pages>40&&$('status').textContent.includes('250 items'),`Expected over 40 pages for 250 items: ${$('page-number').textContent}`);
+    $('sample').click();await preview();
+  });
   await check('card front/back and print limitations are visible',async()=>{
     $('card-mode').click();await preview();assert($('page-number').textContent.includes('Front'),'Card front missing');
     assert($('preflight-results').textContent.includes('TrimBox'),'Missing print limitation');

@@ -86,16 +86,28 @@ test('A4, one column, long wrapped names, newlines and density changes',async()=
 test('over-wide words, title and oversized blocks fail; interpreter recovers',async()=>{
   const word=makeMenu(1);word.categories[0].items[0].name='W'.repeat(100);await assert.rejects(()=>render(word),/printshop-word-too-wide/);
   const tall=makeMenu(1,Array(55).fill('a').join('\n'));await assert.rejects(()=>render(tall),/printshop-item-too-tall/);
-  const long=makeMenu(500,'a '.repeat(300).trim());await assert.rejects(()=>render(long),/printshop-too-many-pages/,'page limit before the render budget');
+  // No page cap: 250 items with long descriptions set completely across more than 40 pages.
+  const long=makeMenu(250,'a '.repeat(300).trim()),longResult=await render(long);
+  assert.ok(longResult.svgs.length>40,`${longResult.svgs.length} pages`);assert.match(longResult.output,new RegExp(`PSDONE ${longResult.svgs.length} 250\\n`));
+  assert.equal([...longResult.output.matchAll(/PSITEM /g)].length,250);
   await assert.rejects(()=>render(makeMenu(500,Array(120).fill('a').join('\n')),{businessName:'W'.repeat(80)}),/printshop-title-too-wide/,'title error before measuring');
   const wideHeading=makeMenu(500,'a '.repeat(300).trim());wideHeading.categories[0].name='W'.repeat(60);
   await assert.rejects(()=>render(wideHeading),/printshop-word-too-wide/,'heading checked before its items are measured');
-  const capped=makeMenu(90,Array(20).fill('a').join('\n'));
-  capped.categories.push({name:'Tail',items:makeMenu(410,'a '.repeat(300).trim()).categories.flatMap(c=>c.items).map(i=>({...i,dietary:'a '.repeat(40).trim(),variations:'a '.repeat(120).trim()}))});
-  await assert.rejects(()=>render(capped),/printshop-too-many-pages/,'page limit reached while measuring lazily');
   const tallLate=makeMenu(500,Array(120).fill('a').join('\n'));await assert.rejects(()=>render(tallLate),/printshop-item-too-tall/,'named error before the render budget');
   await assert.rejects(()=>render(menu,{businessName:'W'.repeat(80)}),/printshop-title-too-wide/);
   assert.equal((await render()).svgs.length,1);
+});
+test('optional maxSteps bounds a run for callers without a cancel control; the interpreter recovers',async()=>{
+  const job=compileMenu(makeMenu(40),defaults,await sources());
+  assert.throws(()=>renderer.render(job,{maxSteps:100000}),/printshop-step-limit: stopped after 100000/);
+  assert.throws(()=>renderer.result(),/completed/);
+  assert.throws(()=>renderer.render(job,{maxSteps:0}),/maxSteps/);
+  // Small and non-multiple limits are exact, never rounded up to a slice.
+  const loop={source:'1000 { 1 pop } repeat showpage',width:100,height:100};
+  assert.throws(()=>renderer.render(loop,{maxSteps:1}),/stopped after 1 interpreter/);
+  assert.throws(()=>renderer.render(job,{maxSteps:30001}),/stopped after 30001 interpreter/);
+  assert.equal(renderer.render(loop).svgs.length,1);
+  const full=renderer.render(job);assert.match(full.output,/PSDONE 3 40\n/);assert.ok(renderer.progress.steps>100000);assert.equal(renderer.progress.pages,3);
 });
 test('content is literal data, cannot execute PostScript',async()=>{
   const data=makeMenu(1);data.categories[0].items[0].name='Soup) show showpage (injection';
@@ -105,6 +117,10 @@ test('rendering failures never expose partial exports',()=>{
   assert.throws(()=>renderer.render({source:'this-operator-does-not-exist',width:612,height:792}),/undefined/);
   assert.throws(()=>renderer.result(),/completed/);
   assert.throws(()=>renderer.render({source:'',width:0,height:792}),/unusable/);
+  assert.throws(()=>renderer.render({source:'showpage',width:1.5,height:792}),/unusable/);
+  assert.throws(()=>renderer.render({source:'showpage',width:2**32+1,height:10}),/unusable/,'no 32-bit wrap at the WASM boundary');
+  assert.throws(()=>renderer.render({source:'showpage',width:2**31,height:10}),/unusable/);
+  assert.equal(renderer.render({source:'showpage',width:2001,height:100}).svgs.length,1,'no 2,000 pt policy cap');
 });
 test('business card: two vector sides, bleed media, safe-area overflow and QR boundary',async()=>{
   const card={kind:'business-card',name:'Alex Morgan',role:'Owner & host',email:'hello@example.com',phone:'(415) 555-0128',website:'example.com',address:'42 Orchard Street'};
@@ -119,8 +135,11 @@ test('business card: two vector sides, bleed media, safe-area overflow and QR bo
   assert.equal(preflightPrint({...card,qr:'https://example.com/menu'},defaults,r).findings.find(f=>f.severity==='error')?.code,'qr-missing');
   assert.equal(withQr.svgs[0],r.svgs[0],'the front is unchanged by a QR on the back');
   assert.throws(()=>compileCard({...card,qr:'https://例え.jp'},defaults,cardSources),/plain ASCII/);
-  assert.throws(()=>compileCard({...card,qr:'x'.repeat(201)},defaults,cardSources),/200 characters/);
   assert.throws(()=>renderer.render(compileCard({...card,address:Array(15).fill('Address').join('\n')},defaults,cardSources)),/printshop-card-overflow/);
+  // Without character caps, the card's measured safe area is the limit for every field.
+  const long='Exceptionally long words and phrases '.repeat(10);
+  for(const [key,value,error] of [['name',long,/printshop-card-name-too-wide/],['role',long,/printshop-card-overflow/],['phone',long,/printshop-card-overflow/],['website',long,/printshop-card-overflow/],['address',long,/printshop-card-overflow/],['email','a'.repeat(200)+'@example.com',/printshop-word-too-wide/]])
+    assert.throws(()=>renderer.render(compileCard({...card,[key]:value},defaults,cardSources)),error,key);
   await saveArtifact('business-card',r);
 });
 test('card QR: module grid, safe area, density limit and lib/qr.ps errors',async()=>{
@@ -132,9 +151,12 @@ test('card QR: module grid, safe area, density limit and lib/qr.ps errors',async
     const px=module*300/72;assert.ok(Math.abs(px-Math.round(px))<1e-6&&px>=4,`whole 300 dpi pixels per module (${px})`);
     assert.equal(n,17+4*version+8);assert.ok(module*n<=72.0001,'at most 1 in square');
   }
-  assert.match(renderer.render(compileCard({...card,qr:'x'.repeat(200)},defaults,cardSources)).output,/PSQR 12 \/?Q 0.96 73/,'the 200-character limit still prints 4 px modules');
-  const dense=compileCard({...card,qr:'x'},defaults,cardSources);
-  assert.throws(()=>renderer.render({...dense,source:dense.source.replace('/qr (x)',`/qr (${'x'.repeat(230)})`)}),/printshop-qr-too-dense/,'backstop past the validated length');
+  // The only QR length limit is capacity at a printable size: version 12 at level Q
+  // (203 bytes) is the densest symbol with 4 px modules in 1 in; lib/qr.ps itself
+  // stops at version 40.
+  assert.match(renderer.render(compileCard({...card,qr:'x'.repeat(203)},defaults,cardSources)).output,/PSQR 12 \/?Q 0.96 73/,'203 bytes print at 4 px modules');
+  assert.throws(()=>renderer.render(compileCard({...card,qr:'x'.repeat(204)},defaults,cardSources)),/printshop-qr-too-dense/,'one byte more needs version 13');
+  assert.throws(()=>renderer.render(compileCard({...card,qr:'x'.repeat(2000)},defaults,cardSources)),/qr-data-too-long-for-level/,'beyond version 40');
   const job=compileCard({...card,qr:'https://example.com'},defaults,cardSources);
   assert.throws(()=>renderer.render({...job,source:job.source.replace('<< /Level /Q >> qrencode','<< /Level /Z >> qrencode')}),/qr-level-must-be-L-M-Q-or-H/,'library errors surface by name');
 });

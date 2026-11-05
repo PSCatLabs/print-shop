@@ -40,6 +40,8 @@ test('offline package resolves the real module graph and exact compressed engine
   const menu=importMenu(result.bundle.text['public/example-menu.csv']);
   const job=compileMenu(menu,defaults,{common:result.bundle.text['templates/common.ps'],template:result.bundle.text['templates/classic-bistro.ps']});
   await scope.self.onmessage({data:{id:7,wasm:result.bundle.wasm,job}});
+  // Progress messages may precede the result on a slow machine.
+  assert.ok(replies.every(reply=>reply.id===7));replies.splice(0,replies.length,...replies.filter(reply=>!reply.progress));
   assert.equal(replies.length,1);assert.equal(replies[0].id,7);assert.equal(replies[0].error,undefined);
   assert.match(replies[0].result.output,/PSDONE 1 14/);
   assert.match(replies[0].result.svgs[0],/<path /);

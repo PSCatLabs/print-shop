@@ -6,14 +6,14 @@ import { readText, createRenderWorker } from './assets.js';
 
 const $=id=>document.getElementById(id);
 let menu, mode='menu', template=defaults.template, result, currentPage=0, previewURL;
-let worker, timeout, debounce, generation=0, sources;
+let worker, debounce, cancelReveal, generation=0, sources;
 const exportButtons=['export-svg','export-pdf','export-png'];
 function status(message,error=false,state=error?'error':'complete') {
   $('status').textContent=message;$('status').classList.toggle('error',error);
   document.documentElement.dataset.renderState=state;
 }
 function disableExports(){exportButtons.forEach(id=>$(id).disabled=true);}
-function invalidate(){clearTimeout(timeout);worker?.terminate();generation++;disableExports();}
+function invalidate(){clearTimeout(debounce);clearTimeout(cancelReveal);worker?.terminate();worker=null;generation++;disableExports();$('cancel-render').hidden=true;}
 function parameters(){
   return {template,businessName:normalizeText($('business-name').value),subtitle:normalizeText($('subtitle').value),
     palette:$('palette').value,typography:$('typography').value,pageSize:$('page-size').value,
@@ -45,11 +45,19 @@ async function render(){
     $('page-label').textContent=mode==='business-card'?'3.5 × 2 IN TRIM / ⅛ IN BLEED':params.pageSize==='a4'?'A4 / 210 × 297 MM':'US LETTER / 8.5 × 11 IN';
     status('Setting the type… Previous preview remains until this edition is ready.',false,'running');
     worker=createRenderWorker();
-    timeout=setTimeout(()=>{if(id===generation){invalidate();status('Rendering took too long. Try fewer items or a simpler layout. The previous preview is out of date.',true);}},20000);
+    // Cancel appears for any render still running after 400 ms, including one
+    // stalled loading the engine, so a quick render does not flash it.
+    cancelReveal=setTimeout(()=>{if(id===generation)$('cancel-render').hidden=false;},400);
     worker.onerror=event=>{if(id===generation){invalidate();status('Rendering failed: '+(event.message||'the rendering worker could not load')+'. The previous preview is out of date.',true);}};
     worker.onmessage=({data})=>{
       if(data.id!==generation)return;
-      clearTimeout(timeout);worker.terminate();
+      // No time limit: a long document reports its progress and can be cancelled.
+      if(data.progress){
+        const pages=data.progress.pages;$('cancel-render').hidden=false;
+        status(`Setting the type… ${pages} ${pages===1?'page':'pages'} so far. Previous preview remains until this edition is ready.`,false,'running');
+        return;
+      }
+      worker.terminate();worker=null;clearTimeout(cancelReveal);$('cancel-render').hidden=true;
       if(data.error){status('Could not compose this layout. '+friendlyError(data.error)+' The previous preview is out of date.',true);return;}
       result=data.result;currentPage=0;displayPage();
       const preflight=preflightPrint(document,params,result);
@@ -73,8 +81,8 @@ function friendlyError(message){
     'printshop-subtitle-too-long':'The subtitle needs more than two lines. Shorten it.',
     'printshop-card-overflow':'The contact details exceed the safe area. Shorten them.',
     'printshop-card-name-too-wide':'The name exceeds the card’s safe area. Shorten it.',
-    'printshop-qr-too-dense':'The QR link is too long to print at a scannable size on the card. Use a shorter link.',
-    'printshop-too-many-pages':'The document exceeds 40 pages. Reduce the number of items.',
+    'printshop-qr-too-dense':'The QR link is too long to print at a scannable size on the card: a 1 in code holds up to 203 characters. Use a shorter link.',
+    'qr-data-too-long-for-level':'The QR link is too long to print at a scannable size on the card: a 1 in code holds up to 203 characters. Use a shorter link.',
     'printshop-font-substituted':'A template font is not available in this engine, so it would be substituted. Report this template.',
   };
   return Object.entries(errors).find(([key])=>message.includes(key))?.[1]||message;
@@ -88,7 +96,6 @@ function applyCSV(text){
 }
 async function loadFile(file){
   if(!file)return;
-  if(file.size>512*1024){invalidate();status('CSV must be smaller than 512 KB.',true);return;}
   try {applyCSV(await file.text());}catch(error){invalidate();status('The file could not be read: '+error.message,true);}
 }
 function download(data,type,name){
@@ -112,6 +119,7 @@ $('export-png').onclick=async()=>{
   }catch(error){status('PNG export failed: '+error.message,true);}
   finally{URL.revokeObjectURL(url);}
 };
+$('cancel-render').onclick=()=>{invalidate();status('Rendering cancelled. The previous preview is out of date; change a setting or load a menu to render again.',false,'cancelled');};
 $('previous').onclick=()=>{currentPage--;displayPage();};$('next').onclick=()=>{currentPage++;displayPage();};
 $('controls').addEventListener('submit',event=>event.preventDefault());
 $('controls').addEventListener('input',()=>{invalidate();status('Updating the composition…',false,'running');clearTimeout(debounce);debounce=setTimeout(render,180);});

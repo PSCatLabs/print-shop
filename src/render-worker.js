@@ -8,11 +8,21 @@ async function engineBytes() {
   if (!response.ok) throw new Error(`Could not load the engine: HTTP ${response.status}`);
   return response.arrayBuffer();
 }
+// No step budget: the page shows progress and a Cancel button, and cancelling
+// (or any new edit) terminates this worker outright. The loop therefore runs
+// without yielding; progress messages go out at most every 250 ms.
+const PROGRESS_INTERVAL = 250;
 self.onmessage = async ({data}) => {
   try {
     renderer ??= await VectorRenderer.create(data.wasm ?? await engineBytes());
     renderer.begin(data.job);
-    while (renderer.step()) await new Promise(resolve=>setTimeout(resolve,0));
+    let reported = Date.now();
+    while (renderer.step()) {
+      if (Date.now() - reported >= PROGRESS_INTERVAL) {
+        reported = Date.now();
+        self.postMessage({id:data.id,progress:renderer.progress});
+      }
+    }
     const result = renderer.result();
     self.postMessage({id:data.id,result},[result.pdf.buffer]);
   } catch(error) {
