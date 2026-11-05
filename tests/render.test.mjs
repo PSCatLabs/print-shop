@@ -102,6 +102,11 @@ test('optional maxSteps bounds a run for callers without a cancel control; the i
   assert.throws(()=>renderer.render(job,{maxSteps:100000}),/printshop-step-limit: stopped after 100000/);
   assert.throws(()=>renderer.result(),/completed/);
   assert.throws(()=>renderer.render(job,{maxSteps:0}),/maxSteps/);
+  // Small and non-multiple limits are exact, never rounded up to a slice.
+  const loop={source:'1000 { 1 pop } repeat showpage',width:100,height:100};
+  assert.throws(()=>renderer.render(loop,{maxSteps:1}),/stopped after 1 interpreter/);
+  assert.throws(()=>renderer.render(job,{maxSteps:30001}),/stopped after 30001 interpreter/);
+  assert.equal(renderer.render(loop).svgs.length,1);
   const full=renderer.render(job);assert.match(full.output,/PSDONE 3 40\n/);assert.ok(renderer.progress.steps>100000);assert.equal(renderer.progress.pages,3);
 });
 test('content is literal data, cannot execute PostScript',async()=>{
@@ -112,6 +117,7 @@ test('rendering failures never expose partial exports',()=>{
   assert.throws(()=>renderer.render({source:'this-operator-does-not-exist',width:612,height:792}),/undefined/);
   assert.throws(()=>renderer.result(),/completed/);
   assert.throws(()=>renderer.render({source:'',width:0,height:792}),/unusable/);
+  assert.throws(()=>renderer.render({source:'showpage',width:1.5,height:792}),/unusable/);
 });
 test('business card: two vector sides, bleed media, safe-area overflow and QR boundary',async()=>{
   const card={kind:'business-card',name:'Alex Morgan',role:'Owner & host',email:'hello@example.com',phone:'(415) 555-0128',website:'example.com',address:'42 Orchard Street'};

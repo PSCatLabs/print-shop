@@ -7,7 +7,8 @@ The owner's rule: no arbitrary limits. Only physical constraints remain.
 - **Removed (policy only).** The 40-page cap (`printshop-too-many-pages`),
   the 500-item and 512 KB CSV caps, every per-field character cap (and the
   inputs' `maxlength`), the 200-character QR cap, the 2 MB PostScript job cap,
-  the 6-digit price cap, the 12 M-step render budget and the 20 s watchdog.
+  the 6-digit price cap, the renderer API's 2,000 pt page-dimension cap,
+  the 12 M-step render budget and the 20 s watchdog.
 - **Kept (real constraints).** Measured layout raises a named error when
   content cannot fit its physical area: words, prices, title, subtitle, items
   taller than a column, and card name or contact overflow. A probe of every
@@ -27,16 +28,19 @@ The owner's rule: no arbitrary limits. Only physical constraints remain.
   12.6 M steps; 2,000 short items, 125 pages, 11.5 M steps, about 14 s).
   Every job already runs in its own worker, so the guard is the user's: the
   worker reports pages so far every 250 ms, the status line shows them, and a
-  Cancel button (shown once progress starts) terminates the worker. Any edit
-  also terminates it. The worker loop no longer yields with `setTimeout(0)`,
+  Cancel button (shown for any render still running after 400 ms, including
+  one stalled loading the engine) terminates the worker. Any edit, and any
+  pending debounced edit, also cancels it. The worker loop no longer yields with `setTimeout(0)`,
   since cancellation is termination. `VectorRenderer` keeps an optional
   `maxSteps` (default unbounded) for callers without a cancel control, such
-  as tests or a future server adapter; it fails with `printshop-step-limit`.
+  as tests or a future server adapter; it fails with `printshop-step-limit` and never runs past the limit (the
+  last slice is only what remains).
 - **Tests.** 250 items with long descriptions set completely over more than 40
   pages; a CSV over 512 KB with 3,000 items imports; QR at 203/204/2,000
   bytes; `maxSteps` stops a run and the interpreter recovers. The browser
   suite gained an eleventh check: a 500-item, about 90-page menu shows
-  progress, Cancel stops it with exports disabled and it never completes,
+  progress, Cancel terminates its worker (the check counts
+  `Worker.prototype.terminate` calls) with exports disabled,
   and then a 250-item menu renders past 40 pages through the real UI. It
   passes offline and served (under `/print-shop/`), desktop and mobile.
 

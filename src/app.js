@@ -6,14 +6,14 @@ import { readText, createRenderWorker } from './assets.js';
 
 const $=id=>document.getElementById(id);
 let menu, mode='menu', template=defaults.template, result, currentPage=0, previewURL;
-let worker, debounce, generation=0, sources;
+let worker, debounce, cancelReveal, generation=0, sources;
 const exportButtons=['export-svg','export-pdf','export-png'];
 function status(message,error=false,state=error?'error':'complete') {
   $('status').textContent=message;$('status').classList.toggle('error',error);
   document.documentElement.dataset.renderState=state;
 }
 function disableExports(){exportButtons.forEach(id=>$(id).disabled=true);}
-function invalidate(){worker?.terminate();worker=null;generation++;disableExports();$('cancel-render').hidden=true;}
+function invalidate(){clearTimeout(debounce);clearTimeout(cancelReveal);worker?.terminate();worker=null;generation++;disableExports();$('cancel-render').hidden=true;}
 function parameters(){
   return {template,businessName:normalizeText($('business-name').value),subtitle:normalizeText($('subtitle').value),
     palette:$('palette').value,typography:$('typography').value,pageSize:$('page-size').value,
@@ -45,6 +45,9 @@ async function render(){
     $('page-label').textContent=mode==='business-card'?'3.5 × 2 IN TRIM / ⅛ IN BLEED':params.pageSize==='a4'?'A4 / 210 × 297 MM':'US LETTER / 8.5 × 11 IN';
     status('Setting the type… Previous preview remains until this edition is ready.',false,'running');
     worker=createRenderWorker();
+    // Cancel appears for any render still running after 400 ms, including one
+    // stalled loading the engine, so a quick render does not flash it.
+    cancelReveal=setTimeout(()=>{if(id===generation)$('cancel-render').hidden=false;},400);
     worker.onerror=event=>{if(id===generation){invalidate();status('Rendering failed: '+(event.message||'the rendering worker could not load')+'. The previous preview is out of date.',true);}};
     worker.onmessage=({data})=>{
       if(data.id!==generation)return;
@@ -54,7 +57,7 @@ async function render(){
         status(`Setting the type… ${pages} ${pages===1?'page':'pages'} so far. Previous preview remains until this edition is ready.`,false,'running');
         return;
       }
-      worker.terminate();worker=null;$('cancel-render').hidden=true;
+      worker.terminate();worker=null;clearTimeout(cancelReveal);$('cancel-render').hidden=true;
       if(data.error){status('Could not compose this layout. '+friendlyError(data.error)+' The previous preview is out of date.',true);return;}
       result=data.result;currentPage=0;displayPage();
       const preflight=preflightPrint(document,params,result);

@@ -16,11 +16,12 @@ export class VectorRenderer {
   begin(job, {maxSteps = Infinity} = {}) {
     this.complete = false;
     this.job = null;
+    // Positive whole points; any larger limit is the engine's to report.
     for (const value of [job.width,job.height]) {
-      if (!Number.isInteger(value) || value <= 0 || value > 2000) throw new RangeError('PSCat: unusable page size.');
+      if (!Number.isInteger(value) || value <= 0) throw new RangeError('PSCat: unusable page size.');
     }
     if (typeof job.source !== 'string' || !job.source) throw new Error('The PostScript job is missing.');
-    if (!(maxSteps > 0)) throw new RangeError('maxSteps must be positive.');
+    if (!(maxSteps === Infinity || (Number.isInteger(maxSteps) && maxSteps > 0))) throw new RangeError('maxSteps must be a positive integer.');
     this.core.begin(job.source,job.width,job.height,1,{svg:true,pdf:true});
     this.job = job;
     this.maxSteps = maxSteps;
@@ -28,8 +29,10 @@ export class VectorRenderer {
   }
   step() {
     if (!this.job) throw new Error('Begin a document before rendering.');
-    const status = this.core.step(SLICE);
-    this.steps += SLICE;
+    // Never run past maxSteps: the last slice is only what remains.
+    const slice = Math.min(SLICE, this.maxSteps - this.steps);
+    const status = this.core.step(slice);
+    this.steps += slice;
     if (status === -1) { this.complete = false; throw new Error(this.core.error); }
     if (status !== 0 && status !== 1) throw new Error(`Unexpected PSCat status: ${status}`);
     if (status === 1 && this.steps >= this.maxSteps) throw new Error(`printshop-step-limit: stopped after ${this.steps} interpreter steps (maxSteps ${this.maxSteps}).`);

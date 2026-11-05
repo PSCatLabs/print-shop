@@ -63,11 +63,22 @@ try{
     // About 90 pages: past the old 40-page cap and 12 M-step budget.
     const rows=['Category,Item name,Description,Price'],text='a '.repeat(300).trim();
     for(let i=0;i<500;i++)rows.push(`Chapter ${Math.floor(i/10)+1},Seasonal plate ${i+1},${text},18.50`);
-    $('csv-editor').value=rows.join('\n');$('apply-csv').click();
-    let start=performance.now();
-    while($('cancel-render').hidden){if(performance.now()-start>20000)throw Error('No progress was reported');await tick();}
-    assert(/\d+ pages? so far/.test($('status').textContent),'Progress is not shown: '+$('status').textContent);
-    $('cancel-render').click();
+    // Record worker termination, so the check proves Cancel stops the work and
+    // does not merely ignore the worker's later messages.
+    const terminate=Worker.prototype.terminate;let terminated=0;
+    Worker.prototype.terminate=function(){terminated++;return terminate.call(this);};
+    try{
+      $('csv-editor').value=rows.join('\n');$('apply-csv').click();
+      // Wait for a progress message (the menu takes several seconds), then cancel.
+      let start=performance.now();
+      while(!/\d+ pages? so far/.test($('status').textContent)){
+        if(document.documentElement.dataset.renderState!=='running')throw Error('Render ended before any progress: '+$('status').textContent);
+        if(performance.now()-start>20000)throw Error('No progress was reported');await tick();}
+      assert(!$('cancel-render').hidden,'Cancel is not offered while rendering');
+      const before=terminated;$('cancel-render').click();
+      assert(terminated===before+1,'Cancel did not terminate the worker');
+    }finally{Worker.prototype.terminate=terminate;}
+    let start;
     assert(document.documentElement.dataset.renderState==='cancelled'&&$('cancel-render').hidden,'Cancel did not stop the render');
     assert($('export-pdf').disabled&&$('status').textContent.includes('cancelled'),'Cancelled render left exports enabled');
     await new Promise(resolve=>setTimeout(resolve,500));
