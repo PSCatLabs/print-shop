@@ -31,7 +31,7 @@ function moduleURL(file){
 const workerURL=URL.createObjectURL(new Blob([${json(workerSource)}],{type:'text/javascript'}));
 globalThis.PRINTSHOP_OFFLINE={text,wasm,workerURL,workerType:'classic'};
 for(const a of document.querySelectorAll('a[href]')){
-  const file=a.getAttribute('href').replace(/^\\//,'');
+  const file=a.getAttribute('href').replace(/^\\.?\\//,'');
   if(file==='') {a.href='#';continue;}
   if(text[file]!==undefined)a.href=URL.createObjectURL(new Blob([text[file]],{type:file.endsWith('.csv')?'text/csv':file.endsWith('.html')?'text/html':'text/plain'}));
 }
@@ -39,7 +39,13 @@ await import(moduleURL('src/app.js'));
 `;
 let html=await readFile('index.html','utf8');
 const css=await readFile('styles.css','utf8');
-html=html.replace('<link rel="stylesheet" href="/styles.css">',()=>`<style>${css}</style>`)
-  .replace('<script type="module" src="/src/app.js"></script>',()=>`<script type="module">${bootstrap}</script>`);
+// Exact replacements: fail the build rather than ship a file that still points
+// at a server. The offline file is itself the offline edition, so it drops the
+// served page's link to download it.
+const replace=(from,to)=>{if(!html.includes(from))throw Error('index.html no longer contains '+from);html=html.replace(from,to);};
+replace('<link rel="stylesheet" href="styles.css">',()=>`<style>${css}</style>`);
+replace('<script type="module" src="src/app.js"></script>',()=>`<script type="module">${bootstrap}</script>`);
+html=html.replace(/<small id="offline-edition">[\s\S]*?<\/small>/,()=>'');
+if(html.includes('printshop-offline.html'))throw Error('The offline edition must not link to itself.');
 await mkdir('dist',{recursive:true});await writeFile('dist/printshop-offline.html',html);
 console.log('Offline edition: dist/printshop-offline.html (no server or network required).');

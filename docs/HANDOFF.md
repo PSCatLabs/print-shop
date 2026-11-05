@@ -36,6 +36,13 @@ host's Homebrew Node was broken.
 - #13 is done: optional card QR through pscat's `lib/qr.ps`. `npm run
   test:qr` decodes SVG, Poppler-rasterized PDF and PNG with Chrome's
   `BarcodeDetector`, and the browser suite decodes the app's PNG download.
+- #30 is done: the public demo is on GitHub Pages at
+  https://pscatlabs.github.io/print-shop/, deployed by
+  `.github/workflows/pages.yml` on every push to `main` (Pages source: GitHub
+  Actions). All app URLs are relative; the served browser check runs under
+  `/print-shop/` and 404s anything outside it. The page links the offline
+  edition. The worker loads the engine as bytes, so the `.wasm` MIME type does
+  not matter. Check the live site with `npm run test:browser -- --url <URL>`.
 - Open, not started: #11 (page boxes/color intent; needs upstream exporter
   work).
 - Deferred: #12, #14, #15, #17.

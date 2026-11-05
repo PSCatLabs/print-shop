@@ -15,9 +15,10 @@ test('offline package resolves the real module graph and exact compressed engine
   const html=await readFile('dist/printshop-offline.html','utf8');
   assert.ok(!html.includes('<script type="module" src='));
   assert.ok(!html.includes('<link rel="stylesheet"'));
+  assert.ok(!html.includes('printshop-offline.html'),'The offline file does not link to itself');
   const bootstrap=/<script type="module">([\s\S]*?)<\/script>/.exec(html)[1];
   const initialization=bootstrap.replace("await import(moduleURL('src/app.js'));",'');
-  const anchors=[{href:'/public/example-menu.csv'},{href:'/public/licenses/THIRD_PARTY_NOTICES.md'},{href:'/'}].map(value=>({...value,getAttribute(){return value.href;}}));
+  const anchors=[{href:'public/example-menu.csv'},{href:'public/licenses/THIRD_PARTY_NOTICES.md'},{href:'./'}].map(value=>({...value,getAttribute(){return value.href;}}));
   const context={URL,Blob,Response,Uint8Array,atob,DecompressionStream,document:{querySelectorAll:()=>anchors}};
   const result=await vm.runInNewContext(`(async()=>{${initialization}\nreturn {bundle:globalThis.PRINTSHOP_OFFLINE,app:moduleURL('src/app.js'),urls:[...cache.values()]};})()`,context);
   const manifest=JSON.parse(await readFile('public/engine/provenance.json','utf8'));
@@ -58,4 +59,11 @@ test('offline package resolves the real module graph and exact compressed engine
     URL.revokeObjectURL(result.bundle.workerURL);
     await rm(scratch,{recursive:true,force:true});
   }
+});
+test('served edition uses only relative URLs, so it works under a path prefix such as GitHub Pages /print-shop/',async()=>{
+  const index=await readFile('index.html','utf8');
+  assert.doesNotMatch(index,/\b(?:href|src)="\//,'index.html has a root-absolute URL');
+  assert.match(index,/<a href="printshop-offline.html" download="printshop-offline.html">/,'served page offers the offline edition');
+  for(const file of ['src/app.js','src/assets.js','src/render-worker.js','src/browser-tests.js'])
+    assert.doesNotMatch(await readFile(file,'utf8'),/fetch\(\s*['"`]\//,`${file} fetches a root-absolute URL`);
 });
