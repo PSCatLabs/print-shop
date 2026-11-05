@@ -1,3 +1,2 @@
 # Keep upstream license bytes and unified-diff context intact.
 public/licenses/** -whitespace
-public/engine/pscat.wasm binary

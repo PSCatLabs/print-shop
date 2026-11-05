@@ -2,7 +2,11 @@ dist/
 artifacts/
 node_modules/
 .DS_Store
-.engine-source/
+.engine-cache/
+# The pscat engine is fetched from its release (npm run engine:fetch, #28);
+# only the pin is committed.
+public/engine/*
+!public/engine/provenance.json
 
 # sdlcify: common ignores
 .env

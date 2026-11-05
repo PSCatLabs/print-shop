@@ -198,8 +198,12 @@ test('preflight claims match the exported PDF bytes',async()=>{
     for(const op of ['k','K','g','G','cs','CS','sc','SC','scn','SCN','Do','BT'])assert.ok(!ops.has(op),`"RGB vector only": unexpected ${op}`);
   }
 });
-test('shipped engine and wrapper match the provenance manifest',async()=>{
+test('installed engine is the pinned pscat release, file for file',async()=>{
   const p=JSON.parse(await readFile('public/engine/provenance.json','utf8'));
-  for(const [file,key] of [['public/engine/pscat.wasm','wasmSha256'],['public/engine/pscat.js','wrapperSha256']])assert.equal(createHash('sha256').update(await readFile(file)).digest('hex'),p[key]);
-  assert.equal(p.branch,'main');assert.equal(p.patches,'none');assert.match(p.commit,/^[0-9a-f]{40}$/);
+  assert.equal(p.package,'pscat');assert.match(p.version,/^\d+\.\d+\.\d+(-[0-9A-Za-z.]+)?$/);
+  assert.match(p.sha256,/^[0-9a-f]{64}$/);assert.ok(p.url.startsWith('https://'),'pinned by an https URL');
+  assert.ok(p.url.endsWith(`/pscat-${p.version}.tgz`),'the URL names the pinned version');
+  assert.equal(p.patches,'none');assert.match(p.commit,/^[0-9a-f]{40}$/);
+  for(const file of ['index.js','renderer.js','core.js','pscat.wasm','THIRD_PARTY_LICENSES.html'])assert.match(p.files[file]??'',/^[0-9a-f]{64}$/,file);
+  for(const [file,hash] of Object.entries(p.files))assert.equal(createHash('sha256').update(await readFile('public/engine/'+file)).digest('hex'),hash,file);
 });

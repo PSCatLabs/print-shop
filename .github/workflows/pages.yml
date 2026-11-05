@@ -4,6 +4,8 @@
 # the /print-shop/ project path. `npm run test:browser` (run locally; CI does
 # not run it) serves dist/ under the same prefix, and with --url checks the
 # live site. dist/ includes the single-file offline edition the page links to.
+# The engine (public/engine/: the pinned pscat release) is fetched at build
+# time, so the deployed pscat.wasm is the release's, byte for byte.
 name: pages
 on:
   push:
@@ -24,7 +26,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      # Verifies the engine's provenance hash before emitting dist/.
+      # The pscat engine is not in git (#28): install the release tarball
+      # pinned in public/engine/provenance.json, verified by SHA-256.
+      - uses: actions/cache@v4
+        with:
+          path: .engine-cache
+          key: pscat-engine-${{ hashFiles('public/engine/provenance.json') }}
+      - run: npm run engine:fetch
+      # Verifies every engine file's hash again before emitting dist/.
       - run: npm run build
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
