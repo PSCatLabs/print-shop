@@ -1,8 +1,9 @@
 # Public demo: the static build (npm run build -> dist/) on GitHub Pages at
 # https://pscatlabs.github.io/print-shop/. Pages source is "GitHub Actions"
 # (build_type: workflow). The app uses relative URLs only, so it works under
-# the /print-shop/ project path; CI's browser check serves it under the same
-# prefix. dist/ includes the single-file offline edition the page links to.
+# the /print-shop/ project path. `npm run test:browser` (run locally; CI does
+# not run it) serves dist/ under the same prefix, and with --url checks the
+# live site. dist/ includes the single-file offline edition the page links to.
 name: pages
 on:
   push:

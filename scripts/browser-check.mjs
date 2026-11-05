@@ -121,7 +121,9 @@ async function runConfig(config,version){
     if(config.edition==='offline'&&assets.offlineLink)problems.push('offline edition links to itself');
 
     // 2. The in-page acceptance suite.
-    await browser.send('Page.navigate',{url:base+'?browser-test'},session);
+    // Set the flag as a search parameter so a --url with its own query or hash still works.
+    const suiteUrl=new URL(base);suiteUrl.hash='';suiteUrl.searchParams.set('browser-test','');
+    await browser.send('Page.navigate',{url:suiteUrl.href},session);
     await waitFor(browser,session,"['passed','failed'].includes(document.documentElement.dataset.browserTests)&&!!document.getElementById('browser-test-report')",SUITE_TIMEOUT,'browser suite');
     const suite=JSON.parse(await evaluate(browser,session,"document.getElementById('browser-test-report').textContent"));
     const foreign=config.edition==='offline'?[...new Set(requests.filter(u=>!/^(file|blob|data):/.test(u)))]:[];
