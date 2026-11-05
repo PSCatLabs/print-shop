@@ -87,7 +87,6 @@
   Cursor /Column get Config /Columns get ge {
     Drawing { showpage } if
     Cursor /Page Cursor /Page get 1 add put
-    Drawing Cursor /Page get 40 gt and { printshop-too-many-pages } if
     Cursor /Column 0 put
     Drawing { ps-start-page } { Cursor /Y ps-column-top put } ifelse
   } { Cursor /Y ps-column-top put } ifelse
