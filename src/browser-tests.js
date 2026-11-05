@@ -14,7 +14,9 @@ async function done(wanted='complete'){
 }
 function input(id,value){$(id).value=value;$(id).dispatchEvent(new Event('input',{bubbles:true}));}
 async function preview(){await done();await $('preview').decode();return (await fetch($('preview').src)).text();}
-async function check(name,run){await run();checks.push(name);}
+// A check returns a reason string when it could not run here: record it as a
+// skip, never as a pass.
+async function check(name,run){const skipped=await run();checks.push(typeof skipped==='string'?`SKIP: ${name} (${skipped})`:name);}
 let captured=[];
 const originalClick=HTMLAnchorElement.prototype.click;
 HTMLAnchorElement.prototype.click=function(){captured.push({url:this.href,name:this.download,bytes:fetch(this.href).then(response=>response.arrayBuffer())});};
@@ -76,9 +78,10 @@ try{
       const image=await createImageBitmap(new Blob([await captured[0].bytes],{type:'image/png'}));
       const codes=await new BarcodeDetector({formats:['qr_code']}).detect(image);
       assert(codes.length===1&&codes[0].rawValue===link,'Exported PNG did not decode to the link: '+JSON.stringify(codes.map(c=>c.rawValue)));
-    } else checks.push('note: BarcodeDetector unavailable; QR decode skipped');
+    }
     input('card-qr','');await preview();
     $('menu-mode').click();$('sample').click();input('business-name','The Olive Room');input('palette','olive');await preview();
+    if(!('BarcodeDetector' in self))return 'BarcodeDetector unavailable; the PNG was not decoded';
   });
   await check('rapid changes preserve only the latest complete edition',async()=>{
     input('business-name','First');input('business-name','Second');input('business-name','The Olive Room');await preview();assert(!$('export-pdf').disabled,'Final render unavailable');
@@ -90,7 +93,7 @@ try{
 }catch(error){document.documentElement.dataset.browserTests='failed';checks.push('FAIL: '+error.message);}
 finally{
   HTMLAnchorElement.prototype.click=originalClick;
-  const data={state:document.documentElement.dataset.browserTests,userAgent:navigator.userAgent,viewport:{width:innerWidth,height:innerHeight},checks};
+  const data={state:document.documentElement.dataset.browserTests,skipped:checks.filter(c=>c.startsWith('SKIP')).length,userAgent:navigator.userAgent,viewport:{width:innerWidth,height:innerHeight},checks};
   const report=document.createElement('pre');report.id='browser-test-report';report.style.cssText='white-space:pre-wrap;overflow-wrap:anywhere;margin:20px;';report.textContent=JSON.stringify(data,null,2);document.body.append(report);
   const link=document.createElement('a');link.id='browser-test-download';link.textContent='Download browser verification report';link.download=`printshop-browser-report-${innerWidth}.json`;link.href=URL.createObjectURL(new Blob([report.textContent],{type:'application/json'}));link.style.cssText='display:inline-block;margin:0 20px 30px;';document.body.append(link);
 }
