@@ -1,9 +1,9 @@
-import {cp,mkdir,rm,readFile} from 'node:fs/promises';
-import {createHash} from 'node:crypto';
-const manifest=JSON.parse(await readFile('public/engine/provenance.json','utf8'));
-const hash=createHash('sha256').update(await readFile('public/engine/pscat.wasm')).digest('hex');
-if(hash!==manifest.wasmSha256) throw Error('WASM provenance mismatch. Rebuild the engine.');
+import {cp,mkdir,rm} from 'node:fs/promises';
+import {ensureEngine} from './fetch-engine.mjs';
+// Installs the pinned pscat release if it is not already present, and fails
+// unless every engine file matches its hash in public/engine/provenance.json.
+await ensureEngine();
 await rm('dist',{recursive:true,force:true});await mkdir('dist');
 for(const file of ['index.html','styles.css','src','templates','public']) await cp(file,'dist/'+file,{recursive:true});
 await import('./build-offline.mjs');
-console.log('Static application built in dist/; engine hash verified.');
+console.log('Static application built in dist/; engine hashes verified.');

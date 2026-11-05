@@ -1,5 +1,35 @@
 # Verification record — 2026-10-28
 
+## Engine from the pscat 0.7.0-rc.4 release (#28, #17) — 2026-11-05
+
+- **Source:** the npm package tarball attached to the PSCatLabs/pscat
+  `v0.7.0-rc.4` GitHub pre-release (tag commit `df39114`), not a clone. Its
+  SHA-256, `773fe8ef93da2c22ca085a53de5f2dbc00312dfe1f714a7502b35bb22b8f76c8`,
+  matches the release's `SHA256SUMS` and was recomputed locally;
+  `gh attestation verify pscat-0.7.0-rc.4.tgz --repo PSCatLabs/pscat` passes
+  (signer `release.yml@refs/tags/v0.7.0-rc.4`). npm still has 0.6.3.
+- **Fetch:** `scripts/fetch-engine.mjs` refuses a tarball whose hash differs
+  from `provenance.json` (tested by changing one hex digit: it exits 1, with
+  or without a cached copy, and `npm run build` fails), then checks each
+  installed file against its own pinned hash. With `public/engine/` and the
+  cache emptied, `npm test` fetched the release and passed.
+- **Renderer:** `src/renderer.js` uses the package's `createRenderer({wasm})`,
+  `begin(source, {width, height, svg:true, pdf:true})`, `step()`,
+  `svgPages()` and `pdf()`. A `PostScriptError` is rethrown with its full
+  `report`, so named errors still match. The Renderer API has no page count;
+  progress probes `svg(n)`, which throws `RangeError` past the last page
+  before serializing anything.
+- **Output:** SVG pages, PDF bytes and interpreter output are byte-identical
+  to the previous engine (`main` `db44e12`, crate 0.7.0-rc.3) for the example
+  menu in all three templates and a business card with a QR code.
+- **Licences:** every committed file in `public/licenses/` (except the README
+  and `LICENSE-CC0`) is byte-identical to the package's copy. The stale
+  `wasm-dependency-licenses.html` is replaced by the package's own
+  `THIRD_PARTY_LICENSES.html`, installed beside the WASM.
+- `npm test` 26/26, `npm run build`, `node scripts/build-offline.mjs`, the
+  issues dry run, `npm run test:browser` 11/11 in all four configurations, and
+  `npm run test:qr` 5/5 payloads.
+
 ## No arbitrary limits (#31) — 2026-11-04
 
 The owner's rule: no arbitrary limits. Only physical constraints remain.

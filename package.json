@@ -5,12 +5,16 @@
   "type": "module",
   "engines": { "node": ">=22" },
   "scripts": {
+    "predev": "node scripts/fetch-engine.mjs",
     "dev": "node scripts/serve.mjs",
     "build": "node scripts/build.mjs",
+    "pretest": "node scripts/fetch-engine.mjs",
     "test": "node --test tests/*.test.mjs",
+    "pretest:browser": "node scripts/fetch-engine.mjs",
     "test:browser": "node scripts/browser-check.mjs",
+    "pretest:qr": "node scripts/fetch-engine.mjs",
     "test:qr": "node scripts/qr-check.mjs",
-    "engine:build": "python3 scripts/build-engine.py",
-    "issues:publish": "node scripts/publish-issues.mjs"
+    "issues:publish": "node scripts/publish-issues.mjs",
+    "engine:fetch": "node scripts/fetch-engine.mjs"
   }
 }

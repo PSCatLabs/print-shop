@@ -1,11 +1,20 @@
 {
-  "repository": "https://github.com/PSCatLabs/pscat",
-  "branch": "main",
-  "commit": "db44e121123ceb737f70daffd34c0a6853dc37a1",
-  "crateVersion": "0.7.0-rc.3",
+  "package": "pscat",
+  "version": "0.7.0-rc.4",
+  "source": "GitHub release (pre-release); not on the npm registry, where pscat is 0.6.3",
+  "release": "https://github.com/PSCatLabs/pscat/releases/tag/v0.7.0-rc.4",
+  "url": "https://github.com/PSCatLabs/pscat/releases/download/v0.7.0-rc.4/pscat-0.7.0-rc.4.tgz",
+  "sha256": "773fe8ef93da2c22ca085a53de5f2dbc00312dfe1f714a7502b35bb22b8f76c8",
+  "tag": "v0.7.0-rc.4",
+  "commit": "df39114f1223cf475c0c2350c47d7475274c72ee",
+  "attestation": "GitHub build provenance, verified with: gh attestation verify pscat-0.7.0-rc.4.tgz --repo PSCatLabs/pscat (signer .github/workflows/release.yml@refs/tags/v0.7.0-rc.4)",
   "patches": "none",
-  "wasmSha256": "c445aa3c1da859bb37a491b01453d202b3816d6b4e3dafe5271181bd895518ee",
-  "wrapperSha256": "f224ff551891e72efa4b09e048f955f6f8d8a13aa36cf4da27350697fe637cf6",
-  "rustc": "rustc 1.96.1 (31fca3adb 2026-06-26)",
-  "license": "(MIT OR Apache-2.0) AND OFL-1.1 AND LPPL-1.3c"
+  "license": "(MIT OR Apache-2.0) AND OFL-1.1 AND LPPL-1.3c",
+  "files": {
+    "index.js": "12baafb1a973d4a43d53830086939dc660e33026fc96e8d920bbfd68a9c8eeed",
+    "renderer.js": "638400fcb258c347a940213506e0c50b7650299ace6fbb6ff5f77e70de97079f",
+    "core.js": "f224ff551891e72efa4b09e048f955f6f8d8a13aa36cf4da27350697fe637cf6",
+    "pscat.wasm": "db2eebac0467d4da98369408740d64c7b5059f9675930aa11a315cddec4a2f10",
+    "THIRD_PARTY_LICENSES.html": "fb9f27683a7f1d8898596f919169ac036681daa010b150c353050bd4bcae1fd6"
+  }
 }
