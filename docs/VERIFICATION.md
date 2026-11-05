@@ -1,5 +1,58 @@
 # Verification record — 2026-10-28
 
+## No arbitrary limits (#31) — 2026-11-04
+
+The owner's rule: no arbitrary limits. Only physical constraints remain.
+
+- **Removed (policy only).** The 40-page cap (`printshop-too-many-pages`),
+  the 500-item and 512 KB CSV caps, every per-field character cap (and the
+  inputs' `maxlength`), the 200-character QR cap, the 2 MB PostScript job cap,
+  the 6-digit price cap, the 12 M-step render budget and the 20 s watchdog.
+- **Kept (real constraints).** Measured layout raises a named error when
+  content cannot fit its physical area: words, prices, title, subtitle, items
+  taller than a column, and card name or contact overflow. A probe of every
+  card field at 370 characters gives a named error (`printshop-card-name-too-wide`,
+  `printshop-card-overflow` or `printshop-word-too-wide`), never off-card
+  drawing; long menu names, descriptions, dietary notes, add-ons and
+  category headings wrap. These are now tests.
+- **QR capacity is the QR limit.** 203 bytes at level Q is version 12 with
+  0.96 pt (4 px at 300 dpi) modules in 72 pt; 204 bytes needs version 13 and
+  raises `printshop-qr-too-dense`; beyond version 40 `lib/qr.ps` raises
+  `qr-data-too-long-for-level`. Both show "a 1 in code holds up to 203
+  characters". The old 200 cap sat 3 bytes under the real limit.
+- **Runaway guard: cancel, with progress.** A fixed budget would be a cap
+  again: without the page cap, plausible large menus need more than the old
+  12 M steps or 20 s (Node, Classic Bistro: 500 items with long
+  descriptions, 88 pages, 13.8 M steps; one 460-item category, 77 pages,
+  12.6 M steps; 2,000 short items, 125 pages, 11.5 M steps, about 14 s).
+  Every job already runs in its own worker, so the guard is the user's: the
+  worker reports pages so far every 250 ms, the status line shows them, and a
+  Cancel button (shown once progress starts) terminates the worker. Any edit
+  also terminates it. The worker loop no longer yields with `setTimeout(0)`,
+  since cancellation is termination. `VectorRenderer` keeps an optional
+  `maxSteps` (default unbounded) for callers without a cancel control, such
+  as tests or a future server adapter; it fails with `printshop-step-limit`.
+- **Tests.** 250 items with long descriptions set completely over more than 40
+  pages; a CSV over 512 KB with 3,000 items imports; QR at 203/204/2,000
+  bytes; `maxSteps` stops a run and the interpreter recovers. The browser
+  suite gained an eleventh check: a 500-item, about 90-page menu shows
+  progress, Cancel stops it with exports disabled and it never completes,
+  and then a 250-item menu renders past 40 pages through the real UI. It
+  passes offline and served (under `/print-shop/`), desktop and mobile.
+
+## Public demo on GitHub Pages (#30) — 2026-11-04
+
+- https://pscatlabs.github.io/print-shop/, deployed by
+  `.github/workflows/pages.yml` from `main` (`e1da21f`, run 41942401635).
+- `npm run test:browser -- --url https://pscatlabs.github.io/print-shop/`
+  (headless Chrome 156.0.8078.80, 2026-11-05 00:37 UTC): live desktop
+  1440 × 900 and mobile 390 × 844 both pass all 10 checks, including loading
+  the example, rendering every template, and SVG, PDF and 300 dpi PNG
+  downloads verified by content. Every request was under `/print-shop/`.
+- The offline edition link returns the 7.6 MB bundled file. Pages serves
+  `pscat.wasm` as `application/wasm`. The worker instantiates bytes, so a
+  different MIME type would not matter either.
+
 ## Card QR codes from pscat's lib/qr.ps (PS-013) — 2026-11-04
 
 - **Upstream contract** (PSCatLabs/pscat `main` `db44e12`, the engine pin;
@@ -14,6 +67,8 @@
   version 12 at 0.96 pt modules within 72 pt, at about 6.9 M of the 12 M
   render-step budget (266 ms). Beyond the validated length, a 4-pixel
   minimum module raises `printshop-qr-too-dense` (tested at 230 bytes).
+  *Superseded by #31:* the 200 cap and the step budget are gone, and
+  `printshop-qr-too-dense` at 204 bytes is the limit.
 - **Geometry:** each module is a whole number of 300 dpi pixels with the
   origin on that grid. A test checks this for five payloads, and also that
   the symbol stays within 1 in.
@@ -129,14 +184,14 @@ foot of a column, which costs two pages over 500 items; a one-page menu is
 balanced but not justified vertically, so short menus end with white space
 below both columns. Long menus' last pages are not balanced.
 
-Near the 40-page cap this matters. A sweep of 500-item-class menus with 2–5
-item categories found menus that render at 39–40 pages on `main` and now raise
-`printshop-too-many-pages` (for example 2-item categories, 4-line descriptions,
-394–400 items, two columns). Letting the pair rule yield near the cap would
-need a full-menu dry pass, which is the eager measurement that changed named
-errors above, so the cap stays a hard guard and this is accepted: a 40-page
-menu is far outside the intended use. Away from the cap, page counts in the
-sweep matched or grew by at most two.
+Near the 40-page cap this mattered. A sweep of 500-item-class menus with 2–5
+item categories found menus that rendered at 39–40 pages on `main` and then
+raised `printshop-too-many-pages` (for example 2-item categories, 4-line
+descriptions, 394–400 items, two columns). Away from the cap, page counts in
+the sweep matched or grew by at most two. *Superseded by #31 (2026-11-04):*
+the page cap is gone, so these menus render in full, a few pages longer: 400
+items in 2-item categories with 4-line descriptions set all 400 items on 50
+pages. The pair rule needs no special case near any page count.
 
 Two more checks: the balance scan's cost peaked at 1.95 M interpreter steps
 for one-page two-column menus of 1–60 items (12 M budget), and at 825 k for
@@ -149,6 +204,8 @@ One review finding was not changed: a 460-item single-category menu whose
 `main` render used the entire 12 M-step budget (12,025,000 steps) before its
 page-limit error now hits the budget slightly earlier. The budget is a resource
 guard, and any added per-item work moves inputs that sit exactly on it.
+*Superseded by #31:* with no budget or page cap, that menu renders all 460
+items on 77 pages (12.6 M steps).
 
 Before and after (Classic Bistro sample, then the 2 + 4 menu):
 [before](verification/ps-010/sample-classic-before.png),

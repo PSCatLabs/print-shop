@@ -23,7 +23,7 @@ host's Homebrew Node was broken.
   DevTools protocol and passes offline and served editions at desktop and
   390 px mobile. Run it after any UI or rendering change.
 - PS-010 (#10) is done: see `docs/VERIFICATION.md` for the layout tradeoff,
-  including menus near the 40-page cap.
+  The 40-page cap it mentions was removed by #31.
 - PS-008 (#8) is done: preflight blocks on missing output, engine warnings,
   media size, counts and bounds; `ps-font` refuses a substituted face; a test
   ties every stated exporter limitation to the PDF bytes. See
@@ -43,6 +43,10 @@ host's Homebrew Node was broken.
   `/print-shop/` and 404s anything outside it. The page links the offline
   edition. The worker loads the engine as bytes, so the `.wasm` MIME type does
   not matter. Check the live site with `npm run test:browser -- --url <URL>`.
+- #31 is done: no arbitrary limits (pages, items, CSV size, field lengths,
+  QR length below capacity). Only measured layout errors and QR capacity
+  remain. Long renders show progress and a Cancel button instead of a step
+  budget and watchdog; see `docs/VERIFICATION.md`.
 - Open, not started: #11 (page boxes/color intent; needs upstream exporter
   work).
 - Deferred: #12, #14, #15, #17.
@@ -51,7 +55,7 @@ host's Homebrew Node was broken.
 
 CSV → typed/validated model → escaped PS content → shared measured PS layout →
 real WASM execution → outlined vector SVG/native PDF. Three menu styles,
-parameter changes, 1/40/500-item menus and two-sided cards with and without a QR code are covered.
+parameter changes, 1/40/250/500-item menus (250 with long descriptions runs past 40 pages) and two-sided cards with and without a QR code are covered.
 The app includes UI upload/edit, customization, paging, exports and preflight.
 The offline package resolves all real JS modules, restores the exact engine,
 and executes its actual packaged classic worker under Node. Headless browser
@@ -78,7 +82,8 @@ the UI clears an earlier error immediately and keeps stale exports disabled.
 - RGB PDF 1.4 with outlined type. No ICC intent, PDF/X validation, trim/bleed
   metadata or crop marks. Card media has geometric bleed; menu media does not.
 - No local QR encoder: QR comes from pscat's `lib/qr.ps` (PS-013). Payloads
-  are printable ASCII up to 200 bytes (about 6.9 M of the 12 M step budget).
+  are printable ASCII up to 203 bytes, the capacity of a version 12 symbol at
+  level Q with 4 px modules in 1 in.
 - Trusted bundled templates only. External package validation is PS-014.
 - No authentication, billing, backend, ecommerce, fulfillment adapter or MCP
   server. Future boundaries are documented without introducing dependencies.

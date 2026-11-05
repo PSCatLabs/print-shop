@@ -34,7 +34,7 @@ push to `main`. To check the live site in headless Chrome:
 
 The offline file contains the same app, templates and actual WASM. It requires
 a modern browser with workers, Blob URLs and native gzip decompression.
-Headless Chrome 156 passes all nine workflow checks in both the offline file
+Headless Chrome 156 passes all eleven workflow checks in both the offline file
 and the served edition, at desktop and 390 px mobile viewports. The offline worker is packaged as a single classic script so it
 can start from a file origin. The served edition uses ordinary module workers.
 
