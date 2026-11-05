@@ -21,16 +21,19 @@ Future MCP operations call these APIs; no separate rendering implementation.
 
 ## Decisions
 
-1. **Pin an unmodified upstream commit.** Dependency is PSCat `main` at
-   `db44e121123ceb737f70daffd34c0a6853dc37a1` (crate 0.7.0-rc.3), built without patches. It is not in a release
-   yet. `fp-map`, `fp-each`, and `fp-curry` (`lib/functional.ps`, embedded in
+1. **Pin an unmodified upstream release.** Dependency is pscat 0.7.0-rc.4
+   (tag commit `df39114`), the npm package tarball attached to the GitHub
+   pre-release, fetched at build time and pinned by version and SHA-256 in
+   `public/engine/provenance.json` (#28). Nothing of the engine is committed
+   (#17). When 0.7.0 is on npm, the pin moves to the registry tarball. `fp-map`, `fp-each`, and `fp-curry` (`lib/functional.ps`, embedded in
    the WASM build) are used by the measured item pipeline; they are real PS
    library procedures, not JS emulations. Until 2026-11-04 the pin was the
    `feature/functional-postscript` commit `e8d6cf2` plus a local vector patch,
    which upstream adopted as PSCatLabs/pscat#1004.
-2. **Use upstream's vector recorders.** `web/pscat.js` is copied unchanged.
-   `begin(source, w, h, 1, {svg:true, pdf:true})` records the run; the
-   renderer reads `svgCount()`/`svg(i)` and `pdf()` after it completes. SVG and
+2. **Use upstream's vector recorders through the package API.**
+   `createRenderer({wasm})` from the package's browser entry, then
+   `begin(source, {width, height, svg:true, pdf:true})` records the run; the
+   renderer reads `svgPages()` and `pdf()` after it completes. SVG and
    PDF are captured together, without rerunning content for each format.
    Upstream SVGs declare their size in points (`width="612pt"`), so a Letter
    preview's intrinsic size is 816 CSS px; PNG export sizes from the page

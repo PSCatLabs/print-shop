@@ -6,11 +6,11 @@ Its initial history was built by Codex in a managed workspace with Git metadata
 in `.local-git/`; that is no longer used. It is an ordinary Git checkout now.
 Do not place these sources in PSCat.
 
-The committed module, unchanged wrapper and provenance are sufficient for
-tests and packaging without a pscat checkout. To rebuild, clone pscat at the
-commit in `public/engine/provenance.json` into a dedicated directory and run
-`scripts/build-engine.py --source <dir>`. No modifications were
-made to the separate ongoing QR project.
+The engine is not committed. `npm run engine:fetch` (run automatically by
+`npm test`, `npm run build` and the browser/QR checks) installs the pscat
+release tarball pinned in `public/engine/provenance.json`, verified by
+SHA-256, into the ignored `public/engine/`; no pscat checkout or Rust is
+needed. No modifications were made to the separate ongoing QR project.
 
 ## State and next tasks
 
@@ -28,10 +28,14 @@ host's Homebrew Node was broken.
   media size, counts and bounds; `ps-font` refuses a substituted face; a test
   ties every stated exporter limitation to the PDF bytes. See
   `docs/PRINT-PRODUCTION.md`.
-- #16 is done: the engine is unmodified pscat `main` at `db44e12` (vector
-  output from PSCatLabs/pscat#1004, `lib/functional.ps` from #923), with no
-  `patches/`. It is not in a pscat release yet; repin to the first release
-  that includes both when it ships (`scripts/build-engine.py`, update `PIN`).
+- #16 is done, and #28/#17 replaced its clone build: the engine is the
+  unmodified pscat 0.7.0-rc.4 release (tag commit `df39114`; vector output
+  from PSCatLabs/pscat#1004, `lib/functional.ps` from #923), fetched at build
+  time from the GitHub release tarball and pinned by version and SHA-256 in
+  `provenance.json`. `src/renderer.js` uses the package's `createRenderer()`
+  API. Next: when pscat 0.7.0 is on npm, repin to the registry tarball
+  (`url`, `version`, `sha256`, file hashes). The package's Renderer has no
+  page count, so `VectorRenderer.progress` probes `svg(n)` for it.
   The templates keep `fp-map`/`fp-each`/`fp-curry` per the owner's decision.
 - #13 is done: optional card QR through pscat's `lib/qr.ps`. `npm run
   test:qr` decodes SVG, Poppler-rasterized PDF and PNG with Chrome's
@@ -41,8 +45,8 @@ host's Homebrew Node was broken.
   `.github/workflows/pages.yml` on every push to `main` (Pages source: GitHub
   Actions). All app URLs are relative; the served browser check runs under
   `/print-shop/` and 404s anything outside it. The page links the offline
-  edition. The worker loads the engine as bytes, so the `.wasm` MIME type does
-  not matter. Check the live site with `npm run test:browser -- --url <URL>`.
+  edition. The package's loader compiles the bytes when the host does not send
+  `application/wasm`, so the `.wasm` MIME type does not matter. Check the live site with `npm run test:browser -- --url <URL>`.
 - #31 is done: no arbitrary limits (pages, items, CSV size, field lengths,
   QR length below capacity). Only measured layout errors and QR capacity
   remain. Long renders show progress and a Cancel button instead of a step

@@ -6,9 +6,11 @@ before changing rendering. `docs/ROADMAP.md` links the durable issue definitions
 - Printable composition belongs in PostScript. No HTML/CSS/canvas document
   layout, screenshot export, image model, LLM dependency, backend, or API key.
 - Keep structured content, template/style, rendering, and browser UI separate.
-- Use the unmodified upstream commit recorded in `public/engine/provenance.json`
-  (pscat `main`; no local patches). Note that it is not yet in a pscat release,
-  so do not imply the npm package has these features until one ships.
+- Use the unmodified pscat release pinned in `public/engine/provenance.json`
+  (the 0.7.0-rc.4 GitHub pre-release tarball, by version and SHA-256; no local
+  patches), installed by `npm run engine:fetch`. Never commit the engine. The
+  npm registry still has 0.6.3, so do not imply the npm package has these
+  features until 0.7.0 is published there.
 - Follow `SDLC.md`: a GitHub issue, a focused feature branch, a PR with
   meaningful checks and coherent commits, and independent review before merge.
   Work is tracked in GitHub Issues; `docs/issues.json` holds only the original

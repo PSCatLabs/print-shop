@@ -53,27 +53,41 @@ can start from a file origin. The served edition uses ordinary module workers.
   optional QR code on the back drawn by pscat's own `lib/qr.ps`.
 - Print preflight that distinguishes vector proofs from production certification.
 
-The engine is unmodified PSCat **`main` at `db44e12`** (crate 0.7.0-rc.3),
-which includes the WASM SVG/PDF output (PSCatLabs/pscat#1004) and
-`lib/functional.ps` (PSCatLabs/pscat#923). Neither is in a pscat release yet,
-so an older release or the current npm package must not be substituted. Source/patch/artifact hashes are in
-[`public/engine/provenance.json`](public/engine/provenance.json).
+The engine is the unmodified **pscat 0.7.0-rc.4** release (tag
+`v0.7.0-rc.4`, commit `df39114`): the npm package tarball attached to the
+[GitHub pre-release](https://github.com/PSCatLabs/pscat/releases/tag/v0.7.0-rc.4).
+It includes the WASM SVG/PDF output (PSCatLabs/pscat#1004) and
+`lib/functional.ps` (PSCatLabs/pscat#923). It is not on the npm registry,
+where `pscat` is still 0.6.3, so the npm package must not be substituted until
+0.7.0 is published there. Printshop drives it through the package's own
+`createRenderer()` API (`svg:true, pdf:true` recording, `svgPages()`,
+`pdf()`). The pinned version, URL, tarball SHA-256 and the hash of every
+installed file are in [`public/engine/provenance.json`](public/engine/provenance.json).
 
-## Verification and engine rebuilding
+## Verification and the engine
 
 ```sh
+npm run engine:fetch        # install the pinned pscat release into public/engine/ (verified by SHA-256)
 npm test                    # parser/schema, real WASM, layout, exports, packaging
-npm run build               # verifies WASM provenance and emits static/offline builds
+npm run build               # verifies every engine file's hash and emits static/offline builds
 npm run test:browser        # headless Chrome, offline + served (under /print-shop/), desktop + mobile; set CHROME_BIN if needed
 npm run test:qr             # decode card QR codes from SVG, PDF (Poppler) and PNG with Chrome's BarcodeDetector
-python3 scripts/build-engine.py
-# Or reuse a dedicated checkout at the exact pin:
-python3 scripts/build-engine.py --source /path/to/pscat --offline
 ```
 
-Normal tests/build need neither Rust nor network; a committed WASM artifact is
-included. Engine rebuild requires Rust, `wasm32-unknown-unknown`, the pinned
-source and locked Cargo dependencies. The builder refuses unrelated changes.
+The engine is not committed (#17): every engine bump would add another 11 MB
+`pscat.wasm` to the history. Instead `scripts/fetch-engine.mjs` downloads the
+release tarball pinned in `provenance.json` (cached in the ignored
+`.engine-cache/`), refuses it unless its SHA-256 matches, extracts it and
+installs `index.js`, `renderer.js`, `core.js`, `pscat.wasm` and
+`THIRD_PARTY_LICENSES.html` unchanged into the ignored `public/engine/`,
+each checked against its own pinned hash. `npm test`, `npm run build`,
+`test:browser`, `test:qr` and `dev` run it first; it needs the network only
+the first time, and needs neither Rust nor a pscat checkout. The offline
+edition embeds the fetched module at build time. To move to another release
+(or to `pscat@0.7.0` from npm once it is published), change `url`, `version`,
+`sha256` and the file hashes in `provenance.json`, after checking the new
+tarball's build-provenance attestation with
+`gh attestation verify <tarball> --repo PSCatLabs/pscat`.
 Tests generate actual PDFs/SVGs under ignored `artifacts/` for inspection.
 
 ## Status and next work
