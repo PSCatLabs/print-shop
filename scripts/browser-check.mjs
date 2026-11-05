@@ -8,8 +8,13 @@
 // on any request that is not file:, blob: or data:, and run behind a dead
 // proxy so a network request could not succeed anyway.
 //
+// The served edition runs under /print-shop/, the GitHub Pages project path,
+// so a root-absolute asset URL fails here as it would on Pages.
+//
 //   npm run build && npm run test:browser            # every configuration
 //   npm run test:browser -- --only offline-mobile    # one configuration
+//   npm run test:browser -- --url https://pscatlabs.github.io/print-shop/
+//                                                    # a deployed site, desktop + mobile
 //   CHROME_BIN=/path/to/chrome npm run test:browser
 import {spawn} from 'node:child_process';
 import {Browser,chrome} from './cdp.mjs';
@@ -22,14 +27,20 @@ const desktop={width:1440,height:900,deviceScaleFactor:1,mobile:false};
 const mobile={width:390,height:844,deviceScaleFactor:3,mobile:true,
   userAgent:'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Mobile Safari/537.36'};
 const offlineUrl=pathToFileURL(path.resolve('dist/printshop-offline.html')).href;
-const configs=[
+const arg=name=>process.argv.includes(name)?process.argv[process.argv.indexOf(name)+1]:null;
+const live=arg('--url');
+const configs=live?[
+  {name:'live-desktop',edition:'served',url:live,viewport:desktop},
+  {name:'live-mobile',edition:'served',url:live,viewport:mobile},
+]:[
   {name:'offline-desktop',edition:'offline',viewport:desktop},
   {name:'offline-mobile',edition:'offline',viewport:mobile},
   {name:'served-desktop',edition:'served',viewport:desktop},
   {name:'served-mobile',edition:'served',viewport:mobile},
 ];
-const only=process.argv.includes('--only')?process.argv[process.argv.indexOf('--only')+1]:null;
-const SUITE_TIMEOUT=180000,RENDER_TIMEOUT=60000;
+const only=arg('--only');
+// A deployed site also downloads the 11 MB engine over the network.
+const SUITE_TIMEOUT=180000,RENDER_TIMEOUT=live?120000:60000;
 
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function evaluate(browser,session,expression){
@@ -47,9 +58,9 @@ async function waitFor(browser,session,expression,timeout,label){
   throw Error(`Timed out waiting for ${label}`);
 }
 async function startServer(){
-  const server=spawn(process.execPath,['scripts/serve.mjs','--dist'],{env:{...process.env,PORT:'0'},stdio:['ignore','pipe','inherit']});
+  const server=spawn(process.execPath,['scripts/serve.mjs','--dist','--base','/print-shop/'],{env:{...process.env,PORT:'0'},stdio:['ignore','pipe','inherit']});
   const base=await new Promise((resolve,reject)=>{let out='';
-    server.stdout.on('data',c=>{out+=c;const m=/http:\/\/127\.0\.0\.1:\d+/.exec(out);if(m)resolve(m[0]+'/');});
+    server.stdout.on('data',c=>{out+=c;const m=/http:\/\/127\.0\.0\.1:\d+\/print-shop\//.exec(out);if(m)resolve(m[0]);});
     server.on('exit',code=>reject(Error('Static server exited with '+code)));});
   return {server,base};
 }
@@ -57,7 +68,8 @@ async function startServer(){
 async function runConfig(config,version){
   const profile=await mkdtemp(path.join(os.tmpdir(),'printshop-browser-'));
   let server,base=offlineUrl;
-  if(config.edition==='served')({server,base}=await startServer());
+  if(config.url)base=config.url;
+  else if(config.edition==='served')({server,base}=await startServer());
   const args=['--headless','--no-first-run','--no-default-browser-check',`--user-data-dir=${profile}`,
     '--disable-background-networking','--disable-extensions','--disable-component-update','about:blank'];
   if(config.edition==='offline')args.splice(1,0,'--proxy-server=http://127.0.0.1:9','--proxy-bypass-list=<-loopback>');
@@ -94,16 +106,31 @@ async function runConfig(config,version){
     const full=await browser.send('Page.captureScreenshot',{format:'png',captureBeyondViewport:true},session);
     await writeFile(`artifacts/browser-${config.name}-full.png`,Buffer.from(full.data,'base64'));
     if(fit.scrollWidth>fit.innerWidth+1)problems.push(`horizontal overflow: ${fit.scrollWidth} > ${fit.innerWidth}`);
+    // The served page links the offline edition; the offline file must not.
+    // Record how the host serves the engine (the app loads its bytes, so the
+    // MIME type is informational).
+    const assets=await evaluate(browser,session,`(async()=>{
+      const link=document.querySelector('#offline-edition a');
+      if(!link)return {offlineLink:null};
+      const offline=await fetch(link.href),html=await offline.text();
+      const wasm=await fetch(new URL('public/engine/pscat.wasm',location.href),{method:'HEAD'});
+      return {offlineLink:{href:link.getAttribute('href'),download:link.download,status:offline.status,bytes:html.length,bundled:html.includes('PRINTSHOP_OFFLINE')},
+        engine:{status:wasm.status,contentType:wasm.headers.get('content-type')}};
+    })()`);
+    if(config.edition==='served'&&!(assets.offlineLink?.status===200&&assets.offlineLink.bundled))problems.push('served page does not link a working offline edition: '+JSON.stringify(assets));
+    if(config.edition==='offline'&&assets.offlineLink)problems.push('offline edition links to itself');
 
     // 2. The in-page acceptance suite.
-    await browser.send('Page.navigate',{url:base+'?browser-test'},session);
+    // Set the flag as a search parameter so a --url with its own query or hash still works.
+    const suiteUrl=new URL(base);suiteUrl.hash='';suiteUrl.searchParams.set('browser-test','');
+    await browser.send('Page.navigate',{url:suiteUrl.href},session);
     await waitFor(browser,session,"['passed','failed'].includes(document.documentElement.dataset.browserTests)&&!!document.getElementById('browser-test-report')",SUITE_TIMEOUT,'browser suite');
     const suite=JSON.parse(await evaluate(browser,session,"document.getElementById('browser-test-report').textContent"));
     const foreign=config.edition==='offline'?[...new Set(requests.filter(u=>!/^(file|blob|data):/.test(u)))]:[];
     if(foreign.length)problems.push('network requests from the file edition: '+foreign.join(', '));
     return {configuration:config.name,edition:config.edition,url:base,browser:version,date:new Date().toISOString(),
       viewport:{width:metrics.width,height:metrics.height,deviceScaleFactor:metrics.deviceScaleFactor,mobile:metrics.mobile},
-      horizontalFit:fit,requestCount:requests.length,nonBlobRequests:[...new Set(requests.filter(u=>!u.startsWith('blob:')).map(u=>u.replace(/^http:\/\/127\.0\.0\.1:\d+/,'')))].sort(),requestSchemes:[...new Set(requests.map(u=>u.split(':')[0]))].sort(),
+      horizontalFit:fit,assets,requestCount:requests.length,nonBlobRequests:[...new Set(requests.filter(u=>!u.startsWith('blob:')).map(u=>u.replace(/^http:\/\/127\.0\.0\.1:\d+/,'').replace(live??'\0',live?new URL(live).pathname:'')))].sort(),requestSchemes:[...new Set(requests.map(u=>u.split(':')[0]))].sort(),
       suite,problems,state:suite.state==='passed'&&problems.length===0?'passed':'failed'};
   }finally{
     await browser.close();server?.kill();

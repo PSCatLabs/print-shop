@@ -1,5 +1,10 @@
 # Printshop
 
+**Try it: [pscatlabs.github.io/print-shop](https://pscatlabs.github.io/print-shop/)**
+— a demo of deterministic documents rendered client-side by pscat's
+WebAssembly build: no server, no account, no AI. The page also offers the
+offline edition as a single HTML file.
+
 A small-business publishing application powered by the actual PSCat
 PostScript interpreter in WebAssembly. Import menu CSV, choose a real
 PostScript template, customize it, preview the vector result, and download
@@ -21,6 +26,11 @@ For a static host or an offline file:
 npm run build
 # Serve dist/ as static files, or open dist/printshop-offline.html directly.
 ```
+
+The app uses relative URLs only, so `dist/` works at a site root or under a
+path prefix. `.github/workflows/pages.yml` deploys it to GitHub Pages on every
+push to `main`. To check the live site in headless Chrome:
+`npm run test:browser -- --url https://pscatlabs.github.io/print-shop/`.
 
 The offline file contains the same app, templates and actual WASM. It requires
 a modern browser with workers, Blob URLs and native gzip decompression.
@@ -54,7 +64,7 @@ so an older release or the current npm package must not be substituted. Source/p
 ```sh
 npm test                    # parser/schema, real WASM, layout, exports, packaging
 npm run build               # verifies WASM provenance and emits static/offline builds
-npm run test:browser        # headless Chrome, offline + served, desktop + mobile; set CHROME_BIN if needed
+npm run test:browser        # headless Chrome, offline + served (under /print-shop/), desktop + mobile; set CHROME_BIN if needed
 npm run test:qr             # decode card QR codes from SVG, PDF (Poppler) and PNG with Chrome's BarcodeDetector
 python3 scripts/build-engine.py
 # Or reuse a dedicated checkout at the exact pin:

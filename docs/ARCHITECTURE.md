@@ -74,6 +74,8 @@ Future MCP operations call these APIs; no separate rendering implementation.
    expression to `self.location.href`; the byte-instantiation path is otherwise
    unchanged. The served edition still uses the original ES module wrapper and
    module worker. This is packaging of the same renderer, not a second pipeline.
+   The served edition uses relative URLs only (no root-absolute paths), so it
+   runs under a path prefix; the public demo is GitHub Pages at `/print-shop/`.
    It requires workers, Blob URLs, WASM and native gzip `DecompressionStream`.
    Both editions pass the headless browser suite in Chrome 156 at desktop and
    390 px mobile viewports (`npm run test:browser`).
