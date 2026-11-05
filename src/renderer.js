@@ -16,9 +16,11 @@ export class VectorRenderer {
   begin(job, {maxSteps = Infinity} = {}) {
     this.complete = false;
     this.job = null;
-    // Positive whole points; any larger limit is the engine's to report.
+    // Positive whole points that cross the WASM boundary as 32-bit integers
+    // unchanged (a larger number would wrap). Within that range, what the engine
+    // can actually allocate is the engine's to report (pscat: unusable page size).
     for (const value of [job.width,job.height]) {
-      if (!Number.isInteger(value) || value <= 0) throw new RangeError('PSCat: unusable page size.');
+      if (!Number.isInteger(value) || value <= 0 || value > 0x7fffffff) throw new RangeError('PSCat: unusable page size.');
     }
     if (typeof job.source !== 'string' || !job.source) throw new Error('The PostScript job is missing.');
     if (!(maxSteps === Infinity || (Number.isInteger(maxSteps) && maxSteps > 0))) throw new RangeError('maxSteps must be a positive integer.');

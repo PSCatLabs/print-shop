@@ -118,6 +118,9 @@ test('rendering failures never expose partial exports',()=>{
   assert.throws(()=>renderer.result(),/completed/);
   assert.throws(()=>renderer.render({source:'',width:0,height:792}),/unusable/);
   assert.throws(()=>renderer.render({source:'showpage',width:1.5,height:792}),/unusable/);
+  assert.throws(()=>renderer.render({source:'showpage',width:2**32+1,height:10}),/unusable/,'no 32-bit wrap at the WASM boundary');
+  assert.throws(()=>renderer.render({source:'showpage',width:2**31,height:10}),/unusable/);
+  assert.equal(renderer.render({source:'showpage',width:2001,height:100}).svgs.length,1,'no 2,000 pt policy cap');
 });
 test('business card: two vector sides, bleed media, safe-area overflow and QR boundary',async()=>{
   const card={kind:'business-card',name:'Alex Morgan',role:'Owner & host',email:'hello@example.com',phone:'(415) 555-0128',website:'example.com',address:'42 Orchard Street'};
