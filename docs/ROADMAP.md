@@ -6,7 +6,7 @@ status and acceptance criteria; each maps to its GitHub issue URL.
 
 | Phase | Focus | Issue IDs | Current state |
 | --- | --- | --- | --- |
-| 1 | Repository bootstrap and WASM integration | PS-001 | Published; unmodified pscat main WASM with upstream SVG/PDF output |
+| 1 | Repository bootstrap and WASM integration | PS-001 | Published; unmodified pscat release WASM (0.7.0-rc.4, fetched by hash, #28) with upstream SVG/PDF output |
 | 2 | Structured menu data model | PS-002, PS-012 | CSV implemented; XLSX and broader encoding optional |
 | 3 | First complete menu template | PS-003 | Classic Bistro verified in WASM and desktop/mobile Chrome |
 | 4 | Deterministic layout and pagination | PS-004, PS-010 | Measured flow, lone-continuation look-ahead and one-page column balancing |

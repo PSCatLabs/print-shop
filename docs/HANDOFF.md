@@ -53,7 +53,7 @@ host's Homebrew Node was broken.
   budget and watchdog; see `docs/VERIFICATION.md`.
 - Open, not started: #11 (page boxes/color intent; needs upstream exporter
   work).
-- Deferred: #12, #14, #15, #17.
+- Deferred: #12, #14, #15. (#17 is resolved by #28: the engine is fetched, not committed.)
 
 ## What works under automated verification
 
