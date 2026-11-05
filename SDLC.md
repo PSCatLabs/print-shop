@@ -74,8 +74,15 @@ it to GitHub.
 `main` requires: a PR before merging, the `test` check passing, `0`
 approving reviews, no force-pushes, no deletions. Admin bypass is `on` —
 see the frontmatter above for the exact values currently applied; this
-prose is a summary, not the source of truth. Admin bypass exists for
-self-rescue only; nothing goes straight to `main` in normal work.
+prose is a summary, not the source of truth.
+
+**Admin bypass stays on, by the owner's decision** (`enforce_admins:
+false`). The owner is this repo's only real user, and bypass is the
+owner's escape hatch for self-rescue only. Normal work always goes
+through a feature branch and a PR, whoever does it: the owner, Codex,
+Claude or any other agent. An agent never uses admin bypass to push to
+`main`, merge a PR before its checks pass, or skip independent review,
+even when its credentials would allow it.
 
 **Up-to-date branches are not required** (`require_up_to_date: false`,
 GitHub's `required_status_checks.strict`). A PR may merge while it is

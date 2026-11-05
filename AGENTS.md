@@ -9,8 +9,10 @@ before changing rendering. `docs/ROADMAP.md` links the durable issue definitions
 - Use the unmodified upstream commit recorded in `public/engine/provenance.json`
   (pscat `main`; no local patches). Note that it is not yet in a pscat release,
   so do not imply the npm package has these features until one ships.
-- Use issues, a focused feature branch, meaningful checks, and coherent commits.
-  If GitHub is unavailable, record an issue in `docs/issues/` for publication.
+- Follow `SDLC.md`: a GitHub issue, a focused feature branch, a PR with
+  meaningful checks and coherent commits, and independent review before merge.
+  Work is tracked in GitHub Issues; `docs/issues.json` holds only the original
+  PS-001 to PS-015 definitions (published with `npm run issues:publish`).
 - Run `npm test` and `npm run build` for implementation changes. Run
   `npm run test:browser` when a browser is available; report a blocked browser
   check honestly. Visually inspect PDF/SVG output for visible template changes.
