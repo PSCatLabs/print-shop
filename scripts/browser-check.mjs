@@ -124,9 +124,9 @@ for(const config of configs.filter(c=>!only||c.name===only)){
   catch(error){report={configuration:config.name,browser:version,state:'failed',problems:[error.message]};}
   reports.push(report);
   await writeFile(`artifacts/browser-${config.name}.json`,portable(report));
-  const failed=(report.suite?.checks||[]).filter(c=>c.startsWith('FAIL'));
-  console.log(`${report.state==='passed'?'PASS':'FAIL'} ${config.name}: ${(report.suite?.checks||[]).length-failed.length} checks passed`
-    +[...report.problems,...failed].map(p=>'\n  '+p).join(''));
+  const all=report.suite?.checks||[],failed=all.filter(c=>c.startsWith('FAIL')),skipped=all.filter(c=>c.startsWith('SKIP'));
+  console.log(`${report.state==='passed'?'PASS':'FAIL'} ${config.name}: ${all.length-failed.length-skipped.length} checks passed, ${skipped.length} skipped`
+    +[...report.problems,...failed,...skipped].map(p=>'\n  '+p).join(''));
 }
 await writeFile('artifacts/browser-report.json',portable(reports));
 if(!reports.length||reports.some(r=>r.state!=='passed'))process.exitCode=1;
